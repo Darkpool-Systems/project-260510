@@ -1,13 +1,13 @@
 package com.back.auth.controller;
 
 import com.back.auth.domain.User;
-import com.back.auth.domain.UserRepository;
+import com.back.auth.repository.UserRepository;
+import com.back.auth.dto.NicknameUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -21,13 +21,10 @@ public class UserController {
 
     private final UserRepository userRepository;
 
-    // 내 정보 조회 - Authentication은 JwtAuthenticationFilter에서 세팅된 것
+    /** 내 정보 조회 */
     @GetMapping("/me")
     public ResponseEntity<?> getMyInfo(Authentication authentication) {
-        Long userId = (Long) authentication.getPrincipal();
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        User user = getUser(authentication);
 
         return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
@@ -36,5 +33,31 @@ public class UserController {
                 "provider", user.getProvider(),
                 "role", user.getRole()
         ));
+    }
+
+    /**
+     * 닉네임 변경
+     * - 1~20자 제한
+     * - 변경된 닉네임 즉시 반환
+     */
+    @PatchMapping("/nickname")
+    public ResponseEntity<?> updateNickname(
+            Authentication authentication,
+            @Validated @RequestBody NicknameUpdateRequest request) {
+
+        User user = getUser(authentication);
+        user.updateNickname(request.getNickname());
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of(
+                "id", user.getId(),
+                "nickname", user.getNickname()
+        ));
+    }
+
+    private User getUser(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }
 }

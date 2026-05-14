@@ -3,7 +3,7 @@ package com.back.auth.oauth;
 import com.back.auth.domain.Provider;
 import com.back.auth.domain.Role;
 import com.back.auth.domain.User;
-import com.back.auth.domain.UserRepository;
+import com.back.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -17,8 +17,8 @@ import java.util.Map;
 /**
  * OAuth2 사용자 정보 처리 서비스
  * - Google 로그인 성공 시 호출됨
- * - 신규 사용자 → DB에 저장 (자동 회원가입)
- * - 기존 사용자 → 닉네임 업데이트
+ * - 신규 사용자 → DB에 저장 + isNewUser=true
+ * - 기존 사용자 → 닉네임 업데이트 + isNewUser=false
  */
 @Slf4j
 @Service
@@ -29,7 +29,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // 부모 클래스가 Google API를 호출하여 사용자 정보를 가져옴
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         Map<String, Object> attributes = oAuth2User.getAttributes();
@@ -37,9 +36,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = (String) attributes.get("name");
         String providerId = (String) attributes.get("sub");
 
-        // 기존 사용자 → 닉네임 갱신, 신규 사용자 → DB 저장
+        // 신규 사용자 여부 판단
+        boolean isNewUser = !userRepository.existsByEmail(email);
+
+        // 기존 사용자 → 그대로 반환 (닉네임은 우리 서비스에서만 관리)
+        // 신규 사용자 → Google 이름으로 초기 닉네임 세팅 후 DB 저장
         User user = userRepository.findByEmail(email)
-                .map(existingUser -> existingUser.updateNickname(name))
                 .orElseGet(() -> userRepository.save(
                         User.builder()
                                 .email(email)
@@ -50,8 +52,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                                 .build()
                 ));
 
-        log.info("OAuth2 로그인 성공 - email: {}, nickname: {}", user.getEmail(), user.getNickname());
+        log.info("OAuth2 로그인 - email: {}, 신규여부: {}", user.getEmail(), isNewUser);
 
-        return new CustomOAuth2User(user, attributes);
+        return new CustomOAuth2User(user, attributes, isNewUser);
     }
 }

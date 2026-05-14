@@ -37,4 +37,5 @@ jwt:
   refresh-token-expiry: 604800000
 
 app:
-  frontend-url: http://localhost:3000  # 나중에 수정
+  frontend-url: http://localhost:3000
+  frontend-new-user-url: http://localhost:3000/change/nickname
