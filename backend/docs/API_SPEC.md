@@ -259,13 +259,7 @@ components/
 
 **승인된 리디렉션 URI:**
 ```
-http://localhost:8080/login/oauth2/code/google
-```
-
-**승인된 JavaScript 원본:**
-```
-http://localhost:3000
-http://localhost:8080
+http://localhost/login/oauth2/code/google
 ```
 
 ---
