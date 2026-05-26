@@ -1,12 +1,15 @@
 package com.back.auth.controller;
 
+import com.back.TestContainersConfig;
 import com.back.auth.jwt.JwtTokenProvider;
+import com.back.auth.service.TokenService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -19,10 +22,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@Import(TestContainersConfig.class)
 class AuthControllerIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private JwtTokenProvider jwtTokenProvider;
+    @Autowired private TokenService tokenService;
 
     private MockMvc mockMvc;
 
@@ -37,9 +42,11 @@ class AuthControllerIntegrationTest {
     // ===== GET /api/auth/status =====
 
     @Test
-    @DisplayName("인증 상태 확인 - 유효한 쿠키 → 200 + authenticated:true")
+    @DisplayName("인증 상태 확인 - 유효한 쿠키 + Redis → 200 + authenticated:true")
     void status_withValidCookie() throws Exception {
         String accessToken = jwtTokenProvider.createAccessToken(1L, "test@gmail.com", "ROLE_USER");
+        String refreshToken = jwtTokenProvider.createRefreshToken(1L, "test@gmail.com", "ROLE_USER");
+        tokenService.saveTokens(1L, accessToken, refreshToken);
 
         mockMvc.perform(get("/api/auth/status")
                         .cookie(new Cookie("access_token", accessToken)))
@@ -64,12 +71,26 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.authenticated").value(false));
     }
 
+    @Test
+    @DisplayName("인증 상태 확인 - JWT 유효하지만 Redis에 없음 → 401")
+    void status_validJwtButNotInRedis() throws Exception {
+        String accessToken = jwtTokenProvider.createAccessToken(99L, "nobody@gmail.com", "ROLE_USER");
+        // Redis에 저장하지 않음
+
+        mockMvc.perform(get("/api/auth/status")
+                        .cookie(new Cookie("access_token", accessToken)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.authenticated").value(false));
+    }
+
     // ===== POST /api/auth/refresh =====
 
     @Test
-    @DisplayName("토큰 재발급 - 유효한 refresh_token → 200 + 새 access_token 쿠키")
+    @DisplayName("토큰 재발급 - 유효한 refresh_token + Redis → 200 + 새 access_token 쿠키")
     void refresh_withValidRefreshToken() throws Exception {
+        String accessToken = jwtTokenProvider.createAccessToken(1L, "test@gmail.com", "ROLE_USER");
         String refreshToken = jwtTokenProvider.createRefreshToken(1L, "test@gmail.com", "ROLE_USER");
+        tokenService.saveTokens(1L, accessToken, refreshToken);
 
         mockMvc.perform(post("/api/auth/refresh")
                         .cookie(new Cookie("refresh_token", refreshToken)))
@@ -95,28 +116,36 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    @DisplayName("토큰 재발급 - JWT 유효하지만 Redis에 없음 → 401")
+    void refresh_validJwtButNotInRedis() throws Exception {
+        String refreshToken = jwtTokenProvider.createRefreshToken(99L, "nobody@gmail.com", "ROLE_USER");
+        // Redis에 저장하지 않음
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new Cookie("refresh_token", refreshToken)))
+                .andExpect(status().isUnauthorized());
+    }
+
     // ===== POST /api/auth/logout =====
 
     @Test
-    @DisplayName("로그아웃 → 200 + 쿠키 Max-Age=0 으로 삭제")
+    @DisplayName("로그아웃 → 200 + 쿠키 삭제 + Redis 삭제")
     void logout() throws Exception {
-        mockMvc.perform(post("/api/auth/logout"))
+        String accessToken = jwtTokenProvider.createAccessToken(1L, "test@gmail.com", "ROLE_USER");
+        String refreshToken = jwtTokenProvider.createRefreshToken(1L, "test@gmail.com", "ROLE_USER");
+        tokenService.saveTokens(1L, accessToken, refreshToken);
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(new Cookie("access_token", accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Logged out"))
                 .andExpect(header().stringValues("Set-Cookie",
                         hasItem(containsString("Max-Age=0"))));
-    }
 
-    @Test
-    @DisplayName("로그아웃 후 status 확인 → 401")
-    void logout_thenStatusUnauthorized() throws Exception {
-        // 로그아웃
-        mockMvc.perform(post("/api/auth/logout"))
-                .andExpect(status().isOk());
-
-        // 쿠키 없이 status 확인
-        mockMvc.perform(get("/api/auth/status"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.authenticated").value(false));
+        // 로그아웃 후 Redis에서 삭제되었으므로 status → 401
+        mockMvc.perform(get("/api/auth/status")
+                        .cookie(new Cookie("access_token", accessToken)))
+                .andExpect(status().isUnauthorized());
     }
 }

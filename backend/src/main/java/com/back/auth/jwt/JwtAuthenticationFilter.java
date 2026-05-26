@@ -1,5 +1,6 @@
 package com.back.auth.jwt;
 
+import com.back.auth.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -20,8 +21,10 @@ import java.util.List;
 /**
  * JWT 인증 필터 - 매 요청마다 쿠키의 JWT를 검증
  *
- * 요청 → 쿠키에서 access_token 추출 → 유효하면 SecurityContext에 인증 정보 세팅
- * OncePerRequestFilter: 요청당 1번만 실행되는 것을 보장
+ * 요청 → 쿠키에서 access_token 추출 → JWT 유효성 검증 → Redis 존재 여부 확인
+ * → 둘 다 통과하면 SecurityContext에 인증 정보 세팅
+ *
+ * Redis 검증을 추가함으로써 로그아웃 시 즉시 토큰 무효화 가능
  */
 @Slf4j
 @Component
@@ -29,6 +32,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenService tokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -39,19 +43,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
             Long userId = jwtTokenProvider.getUserId(token);
-            String email = jwtTokenProvider.getEmail(token);
-            String role = jwtTokenProvider.getRole(token);
 
-            // SecurityContext에 인증 정보 저장 → Controller에서 Authentication으로 접근 가능
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId,  // principal: Controller에서 getPrincipal()로 꺼냄
-                            email,   // credentials
-                            List.of(new SimpleGrantedAuthority(role))
-                    );
+            // JWT 서명 유효 + Redis에 저장된 토큰과 일치해야 인증 통과
+            if (tokenService.isAccessTokenValid(userId, token)) {
+                String email = jwtTokenProvider.getEmail(token);
+                String role = jwtTokenProvider.getRole(token);
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("인증 성공 - userId: {}, email: {}", userId, email);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userId,
+                                email,
+                                List.of(new SimpleGrantedAuthority(role))
+                        );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("인증 성공 - userId: {}, email: {}", userId, email);
+            } else {
+                log.debug("Redis에 토큰 없음 - 폐기된 토큰 (userId: {})", userId);
+            }
         }
 
         filterChain.doFilter(request, response);

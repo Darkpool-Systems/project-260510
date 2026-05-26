@@ -70,7 +70,8 @@ public class SecurityConfig {
     }
 
     /**
-     * CORS 설정 - Next.js(:3000) → Spring Boot(:8080) 요청 허용
+     * CORS 설정 - Nginx를 통한 동일 Origin 구조이지만,
+     * 로컬 개발 시 직접 접속 대비 설정 유지
      * allowCredentials(true): HttpOnly 쿠키 전송에 필수
      */
     @Bean

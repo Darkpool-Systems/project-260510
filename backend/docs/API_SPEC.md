@@ -1,36 +1,44 @@
 # Next.js ↔ Spring Boot 인증 연동 규격서
 
 > **진입점**: `http://localhost` (Nginx → 프론트/백엔드 라우팅)
-> **인증 방식**: Google OAuth2 + JWT (HttpOnly Cookie)
+> **인증 방식**: Google OAuth2 + JWT (HttpOnly Cookie) + Redis (토큰 저장소)
 
 ---
 
 ## 1. 전체 인증 흐름
 
 ```
-[Next.js]                      [Spring Boot]                [Google]
-    │                               │                          │
-    │  1. 구글 로그인 버튼 클릭       │                          │
-    │  window.location.href =       │  2. Google으로 리다이렉트   │
-    │  ".../oauth2/authorization    │────────────────────────>│
-    │   /google"                    │                          │
-    │                               │  3. 사용자 Google 인증     │
-    │                               │<────────────────────────│
-    │                               │                          │
-    │  4. JWT 쿠키 세팅 + 리다이렉트  │                          │
-    │<──────────────────────────────│                          │
-    │  Set-Cookie: access_token=... │                          │
-    │  Set-Cookie: refresh_token=...│                          │
-    │                               │                          │
-    │  [신규 사용자] → /change/nickname                         │
-    │  [기존 사용자] → /                                        │
-    │                               │                          │
-    │  5. API 호출 (쿠키 자동 전송)   │                          │
-    │──────────────────────────────>│                          │
-    │  Cookie: access_token=...     │                          │
+[Next.js]                      [Spring Boot]                [Google]       [Redis]
+    │                               │                          │              │
+    │  1. 구글 로그인 버튼 클릭       │                          │              │
+    │  window.location.href =       │  2. Google으로 리다이렉트   │              │
+    │  ".../oauth2/authorization    │────────────────────────>│              │
+    │   /google"                    │                          │              │
+    │                               │  3. 사용자 Google 인증     │              │
+    │                               │<────────────────────────│              │
+    │                               │                          │              │
+    │                               │  4. JWT 생성 → Redis 저장  │              │
+    │                               │─────────────────────────────────────>│
+    │                               │  SET access:{userId}                  │
+    │                               │  SET refresh:{userId}                 │
+    │                               │                          │              │
+    │  5. JWT 쿠키 세팅 + 리다이렉트  │                          │              │
+    │<──────────────────────────────│                          │              │
+    │  Set-Cookie: access_token=... │                          │              │
+    │  Set-Cookie: refresh_token=...│                          │              │
+    │                               │                          │              │
+    │  [신규 사용자] → /change/nickname                         │              │
+    │  [기존 사용자] → /                                        │              │
+    │                               │                          │              │
+    │  6. API 호출 (쿠키 자동 전송)   │                          │              │
+    │──────────────────────────────>│  7. JWT 검증 + Redis 확인  │              │
+    │  Cookie: access_token=...     │─────────────────────────────────────>│
+    │                               │  GET access:{userId}                  │
 ```
 
-**핵심**: 프론트엔드에서 토큰을 저장/관리하는 코드가 전혀 없다. 브라우저가 HttpOnly 쿠키를 자동으로 관리한다.
+**핵심**:
+- 프론트엔드에서 토큰을 저장/관리하는 코드가 전혀 없다. 브라우저가 HttpOnly 쿠키를 자동으로 관리한다.
+- Redis가 토큰의 서버 측 저장소 역할 → 로그아웃 시 즉시 무효화 가능 (순수 JWT 방식의 한계 극복)
 
 ---
 
@@ -48,7 +56,7 @@ GET http://localhost/oauth2/authorization/google
 
 export default function LoginButton() {
   const handleLogin = () => {
-    window.location.href = "http://localhost/oauth2/authorization/google";
+    window.location.href = "/oauth2/authorization/google";
   };
 
   return <button onClick={handleLogin}>Google 로그인</button>;
@@ -111,6 +119,8 @@ GET /api/auth/status
 인증 필요: ❌
 ```
 
+JWT 유효성 + Redis 존재 여부 모두 확인
+
 | 응답 | Body |
 |------|------|
 | 200 | `{ "authenticated": true }` |
@@ -124,6 +134,8 @@ GET /api/auth/status
 POST /api/auth/refresh
 인증 필요: ❌ (refresh_token 쿠키 필요)
 ```
+
+refresh_token의 JWT 검증 + Redis 검증 후 새 access_token 발급 → Redis 갱신
 
 | 응답 | Body |
 |------|------|
@@ -139,9 +151,11 @@ POST /api/auth/logout
 인증 필요: ❌
 ```
 
+Redis에서 토큰 삭제 → 즉시 무효화 + 쿠키 삭제
+
 | 응답 | Body |
 |------|------|
-| 200 | `{ "message": "Logged out" }` + 쿠키 삭제 |
+| 200 | `{ "message": "Logged out" }` + 쿠키 삭제 + Redis 삭제 |
 
 ```tsx
 const handleLogout = async () => {
@@ -212,12 +226,22 @@ const handleNicknameUpdate = async (nickname: string) => {
 
 ## 5. 토큰 정보
 
-| 항목 | access_token 쿠키 | refresh_token 쿠키 |
-|------|-------------------|-------------------|
+| 항목 | access_token | refresh_token |
+|------|-------------|---------------|
 | 용도 | API 인증 | Access Token 재발급 |
 | 유효기간 | 1시간 | 7일 |
-| HttpOnly | ✅ (JS 접근 불가) | ✅ (JS 접근 불가) |
+| HttpOnly 쿠키 | ✅ (JS 접근 불가) | ✅ (JS 접근 불가) |
 | SameSite | Lax | Lax |
+| Redis Key | `access:{userId}` | `refresh:{userId}` |
+| Redis TTL | 1시간 | 7일 |
+
+### 토큰 이중 검증
+
+모든 인증 요청은 다음 두 조건을 모두 만족해야 한다:
+1. **JWT 서명 유효** — 위변조 방지
+2. **Redis에 토큰 존재 + 일치** — 즉시 폐기 지원
+
+→ 로그아웃 시 Redis에서 삭제하면 JWT가 아직 만료 전이어도 즉시 무효화된다.
 
 ---
 
@@ -227,7 +251,7 @@ const handleNicknameUpdate = async (nickname: string) => {
 |-----------|------|------|
 | 200 | 성공 | 정상 처리 |
 | 400 | 잘못된 요청 (유효성 검증 실패) | 입력값 확인 |
-| 401 | 인증 실패 | 토큰 재발급 시도 → 실패 시 /login |
+| 401 | 인증 실패 (JWT 무효 또는 Redis에 없음) | 토큰 재발급 시도 → 실패 시 /login |
 | 403 | 권한 부족 | 권한 없음 안내 |
 
 ---
@@ -262,10 +286,25 @@ http://localhost/login/oauth2/code/google
 
 ---
 
-## 9. 연동 체크리스트
+## 9. 인프라 구조
+
+```
+[브라우저] → :80 [Nginx]
+                  ├─ /api/*          → [Spring Boot :8080] ←→ [Redis :6379]
+                  ├─ /oauth2/*       → [Spring Boot :8080]
+                  ├─ /login/oauth2/* → [Spring Boot :8080]
+                  └─ /*              → [Next.js :3000]
+```
+
+Docker Compose로 전체 실행: `docker compose up --build`
+
+---
+
+## 10. 연동 체크리스트
 
 - [ ] axios 인스턴스 생성 (`withCredentials: true` + 인터셉터)
-- [ ] 구글 로그인 버튼 → `window.location.href`로 백엔드 OAuth URL 호출
+- [ ] 구글 로그인 버튼 → `window.location.href`로 OAuth URL 호출
 - [ ] `GET /api/auth/status`로 로그인 여부 확인
 - [ ] `/change/nickname` 페이지 → `PATCH /api/user/nickname` 호출
 - [ ] 로그아웃 → `POST /api/auth/logout` 호출
+- [ ] Redis 연동 확인 — 로그아웃 후 같은 토큰으로 재접근 시 401

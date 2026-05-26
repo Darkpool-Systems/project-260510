@@ -1,16 +1,19 @@
 package com.back.auth.controller;
 
+import com.back.TestContainersConfig;
 import com.back.auth.domain.Provider;
 import com.back.auth.domain.Role;
 import com.back.auth.domain.User;
 import com.back.auth.repository.UserRepository;
 import com.back.auth.jwt.JwtTokenProvider;
+import com.back.auth.service.TokenService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,11 +26,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@Import(TestContainersConfig.class)
 class UserControllerIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private JwtTokenProvider jwtTokenProvider;
     @Autowired private UserRepository userRepository;
+    @Autowired private TokenService tokenService;
 
     private MockMvc mockMvc;
     private User testUser;
@@ -51,6 +56,11 @@ class UserControllerIntegrationTest {
 
         accessToken = jwtTokenProvider.createAccessToken(
                 testUser.getId(), testUser.getEmail(), testUser.getRole().getKey());
+        String refreshToken = jwtTokenProvider.createRefreshToken(
+                testUser.getId(), testUser.getEmail(), testUser.getRole().getKey());
+
+        // Redis에 토큰 저장 — 인증 필터가 Redis 검증을 하므로 필수
+        tokenService.saveTokens(testUser.getId(), accessToken, refreshToken);
     }
 
     // ===== GET /api/user/me =====
