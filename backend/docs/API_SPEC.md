@@ -1,7 +1,6 @@
 # Next.js ↔ Spring Boot 인증 연동 규격서
 
-> **Backend**: `http://localhost:8080`
-> **Frontend**: `http://localhost:3000` (Next.js)
+> **진입점**: `http://localhost` (Nginx → 프론트/백엔드 라우팅)
 > **인증 방식**: Google OAuth2 + JWT (HttpOnly Cookie)
 
 ---
@@ -40,7 +39,7 @@
 브라우저를 백엔드 OAuth URL로 리다이렉트한다. (fetch 호출 아님!)
 
 ```
-GET http://localhost:8080/oauth2/authorization/google
+GET http://localhost/oauth2/authorization/google
 ```
 
 ```tsx
@@ -49,7 +48,7 @@ GET http://localhost:8080/oauth2/authorization/google
 
 export default function LoginButton() {
   const handleLogin = () => {
-    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    window.location.href = "http://localhost/oauth2/authorization/google";
   };
 
   return <button onClick={handleLogin}>Google 로그인</button>;
@@ -60,8 +59,8 @@ export default function LoginButton() {
 
 | 구분 | 리다이렉트 URL | 설명 |
 |------|--------------|------|
-| **신규 사용자** | `http://localhost:3000/change/nickname` | 처음 가입한 사용자 |
-| **기존 사용자** | `http://localhost:3000` | 이미 가입된 사용자 |
+| **신규 사용자** | `http://localhost/change/nickname` | 처음 가입한 사용자 |
+| **기존 사용자** | `http://localhost` | 이미 가입된 사용자 |
 
 ---
 
@@ -74,7 +73,6 @@ export default function LoginButton() {
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080",
   withCredentials: true,
 });
 
