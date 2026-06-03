@@ -1,0 +1,80 @@
+name: Backend PR CI
+
+env:
+  BACKEND_DIR: backend
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - ".github/workflows/**"
+      - "backend/build.gradle.kts"
+      - "backend/settings.gradle.kts"
+      - "backend/src/**"
+      - "backend/Dockerfile"
+
+concurrency:
+  group: backend-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.BACKEND_DIR }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Generate .env from Secret
+        if: ${{ secrets.DOT_ENV != '' }}
+        run: printf "%s" "${{ secrets.DOT_ENV }}" > .env
+
+      - name: Build without tests
+        run: ./gradlew clean build -x test --warning-mode=all --no-daemon
+
+      - name: Run tests
+        run: ./gradlew test --info --no-daemon
+
+      - name: Generate JUnit Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: "backend/build/test-results/test/TEST-*.xml"
+
+      - name: Copy JAR file to dist directory
+        if: success()
+        run: |
+          mkdir -p dist
+          cp $(ls build/libs/*.jar | grep -v plain | head -n 1) dist/app.jar
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: backend-jar
+          path: backend/dist/app.jar
