@@ -1,0 +1,94 @@
+name: PR Auto Create Issue
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-auto-issue-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-create-issue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR title and create issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const title = (pr.title || "").trim();
+            const types = ["FEAT", "FIX", "REFACTOR", "COMMENT", "STYLE", "TEST", "CHORE", "INIT"];
+
+            const match = title.match(/^\[([A-Za-z]+)\]:\s*(.+)$/);
+
+            if (!match) {
+              core.setFailed("PR 제목 형식은 `[TYPE]: 제목` 이어야 합니다. 예: [FEAT]: 로그인 기능 추가");
+              return;
+            }
+
+            const type = match[1].toUpperCase();
+            const subject = match[2].trim();
+
+            if (!types.includes(type)) {
+              core.setFailed(`TYPE은 ${types.join(", ")} 중 하나여야 합니다.`);
+              return;
+            }
+
+            if (subject.length < 1 || subject.length > 50) {
+              core.setFailed(`제목은 1~50자 이내여야 합니다. 현재 ${subject.length}자`);
+              return;
+            }
+
+            const marker = `auto-issue-for-pr:${pr.number}`;
+
+            const search = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue ${marker}`
+            });
+
+            let issueNumber = null;
+
+            if (search.data.items.length > 0) {
+              issueNumber = search.data.items[0].number;
+            } else {
+              const issue = await github.rest.issues.create({
+                owner,
+                repo,
+                title: `[${type}]: ${subject}`,
+                body: [
+                  `PR #${pr.number}에서 자동 생성된 이슈입니다.`,
+                  "",
+                  "## 작업 내용",
+                  pr.body || "-",
+                  "",
+                  `<!-- ${marker} -->`
+                ].join("\n"),
+                labels: [type, "auto"]
+              });
+
+              issueNumber = issue.data.number;
+            }
+
+            const body = pr.body || "";
+            const hasClose = new RegExp(`(close[sd]?|fixe?[sd]?|resolve[sd]?)\\s+#${issueNumber}`, "i").test(body);
+
+            if (!hasClose) {
+              const newBody = `${body}\n\nCloses #${issueNumber}\n<!-- auto-linked-issue:${issueNumber} -->`;
+              await github.rest.pulls.update({
+                owner,
+                repo,
+                pull_number: pr.number,
+                body: newBody
+              });
+            }
