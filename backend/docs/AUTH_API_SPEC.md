@@ -28,7 +28,7 @@
     │  Set-Cookie: refresh_token=...│                          │              │
     │                               │                          │              │
     │  [신규 사용자] → /change/nickname                         │              │
-    │  [기존 사용자] → /                                        │              │
+    │  [기존 사용자] → /dashboard                               │              │
     │                               │                          │              │
     │  6. API 호출 (쿠키 자동 전송)   │                          │              │
     │──────────────────────────────>│  7. JWT 검증 + Redis 확인  │              │
@@ -68,7 +68,7 @@ export default function LoginButton() {
 | 구분 | 리다이렉트 URL | 설명 |
 |------|--------------|------|
 | **신규 사용자** | `http://localhost/change/nickname` | 처음 가입한 사용자 |
-| **기존 사용자** | `http://localhost` | 이미 가입된 사용자 |
+| **기존 사용자** | `http://localhost/dashboard` | 이미 가입된 사용자 |
 
 ---
 
@@ -260,7 +260,7 @@ const handleNicknameUpdate = async (nickname: string) => {
 
 ```
 app/
-├── page.tsx                # 메인 페이지 (기존 사용자 로그인 후 도착)
+├── page.tsx                # 랜딩 페이지 (비회원/회원 모두 접근 가능)
 ├── login/
 │   └── page.tsx            # 로그인 페이지 (Google 로그인 버튼)
 ├── change/

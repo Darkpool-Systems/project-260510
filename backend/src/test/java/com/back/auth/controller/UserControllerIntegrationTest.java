@@ -81,7 +81,7 @@ class UserControllerIntegrationTest {
     @DisplayName("내 정보 조회 - 쿠키 없음 → 인증 거부")
     void getMyInfo_withoutCookie() throws Exception {
         mockMvc.perform(get("/api/user/me"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     // ===== PATCH /api/user/nickname =====
@@ -127,6 +127,6 @@ class UserControllerIntegrationTest {
         mockMvc.perform(patch("/api/user/nickname")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nickname\": \"새닉네임\"}"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 }

@@ -18,7 +18,7 @@ import java.io.IOException;
  * OAuth2 로그인 성공 핸들러
  * - JWT 생성 → Redis에 저장 + HttpOnly 쿠키에 설정
  * - 신규 사용자 → frontend-new-user-url 로 리다이렉트
- * - 기존 사용자 → frontend-url 로 리다이렉트
+ * - 기존 사용자 → frontend-dashboard-url 로 리다이렉트
  */
 @Slf4j
 @Component
@@ -28,11 +28,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenService tokenService;
 
-    @Value("${app.frontend-url}")
-    private String frontendUrl;
-
     @Value("${app.frontend-new-user-url}")
     private String frontendNewUserUrl;
+
+    @Value("${app.frontend-dashboard-url}")
+    private String frontendDashboardUrl;
 
     @Value("${jwt.access-token-expiry}")
     private long accessTokenExpiry;
@@ -65,8 +65,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         addCookie(response, "access_token", accessToken, (int) (accessTokenExpiry / 1000));
         addCookie(response, "refresh_token", refreshToken, (int) (refreshTokenExpiry / 1000));
 
-        // 신규 사용자 → /change/nickname, 기존 사용자 → /
-        String redirectUrl = isNewUser ? frontendNewUserUrl : frontendUrl;
+        // 신규 사용자 → /change/nickname, 기존 사용자 → /dashboard
+        String redirectUrl = isNewUser ? frontendNewUserUrl : frontendDashboardUrl;
         log.info("리다이렉트 → {}", redirectUrl);
 
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
