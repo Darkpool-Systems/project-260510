@@ -300,7 +300,33 @@ Docker Compose로 전체 실행: `docker compose up --build`
 
 ---
 
-## 10. 연동 체크리스트
+## 10. OAuth2 로그인 실패 처리
+
+로그인 실패 시 백엔드가 프론트 `/login`으로 에러 코드를 쿼리에 실어 리다이렉트한다.
+
+```
+302 Redirect → /login?error=<errorCode>
+```
+
+| 에러 코드 | 발생 상황 |
+|-----------|----------|
+| `access_denied` | 사용자가 구글 동의 화면에서 취소/거부 |
+| `authorization_request_not_found` | state 불일치 / 세션 만료 (CSRF 검증 실패) |
+| `invalid_token_response` | 토큰 교환 실패 (네트워크·구글 응답 이상) |
+| `invalid_user_info_response` | 사용자 프로필 조회 실패 |
+| `oauth_failed` | 그 외 일반 실패 (기본값) |
+
+프론트에서는 `/login` 페이지 진입 시 `?error` 쿼리 파라미터를 읽어 사용자에게 안내한다.
+
+```tsx
+// 예시: /login?error=access_denied
+const searchParams = useSearchParams();
+const error = searchParams.get("error"); // "access_denied"
+```
+
+---
+
+## 11. 연동 체크리스트
 
 - [ ] axios 인스턴스 생성 (`withCredentials: true` + 인터셉터)
 - [ ] 구글 로그인 버튼 → `window.location.href`로 OAuth URL 호출
