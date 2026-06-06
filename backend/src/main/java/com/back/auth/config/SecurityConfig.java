@@ -2,6 +2,7 @@ package com.back.auth.config;
 
 import com.back.auth.jwt.JwtAuthenticationFilter;
 import com.back.auth.oauth.CustomOAuth2UserService;
+import com.back.auth.oauth.OAuth2FailureHandler;
 import com.back.auth.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +33,7 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.frontend-url}")
@@ -63,6 +65,7 @@ public class SecurityConfig {
                                 userInfo.userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler)
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
                 .exceptionHandling(ex -> ex
