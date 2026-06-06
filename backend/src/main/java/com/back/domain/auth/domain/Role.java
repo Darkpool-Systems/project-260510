@@ -1,4 +1,4 @@
-package com.back.auth.domain;
+package com.back.domain.auth.domain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

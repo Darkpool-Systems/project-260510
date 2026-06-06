@@ -1,4 +1,4 @@
-package com.back.auth.jwt;
+package com.back.domain.auth.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

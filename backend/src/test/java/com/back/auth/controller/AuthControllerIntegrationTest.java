@@ -1,8 +1,8 @@
-package com.back.auth.controller;
+package com.back.domain.auth.controller;
 
 import com.back.TestContainersConfig;
-import com.back.auth.jwt.JwtTokenProvider;
-import com.back.auth.service.TokenService;
+import com.back.domain.auth.jwt.JwtTokenProvider;
+import com.back.domain.auth.service.TokenService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

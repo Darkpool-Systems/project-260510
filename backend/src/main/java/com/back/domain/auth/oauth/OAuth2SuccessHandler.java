@@ -1,8 +1,8 @@
-package com.back.auth.oauth;
+package com.back.domain.auth.oauth;
 
-import com.back.auth.jwt.JwtTokenProvider;
-import com.back.auth.domain.User;
-import com.back.auth.service.TokenService;
+import com.back.domain.auth.jwt.JwtTokenProvider;
+import com.back.domain.auth.domain.User;
+import com.back.domain.auth.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

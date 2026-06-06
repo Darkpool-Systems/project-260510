@@ -1,6 +1,6 @@
-package com.back.auth.oauth;
+package com.back.domain.auth.oauth;
 
-import com.back.auth.domain.User;
+import com.back.domain.auth.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

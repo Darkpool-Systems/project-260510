@@ -1,6 +1,6 @@
-package com.back.auth.jwt;
+package com.back.domain.auth.jwt;
 
-import com.back.auth.service.TokenService;
+import com.back.domain.auth.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
