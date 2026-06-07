@@ -13,11 +13,11 @@ on:
       - reopened
       - synchronize
     paths:
-      - "project-260510/.github/workflows/**"
-      - "project-260510/backend/build.gradle.kts"
-      - "project-260510/backend/settings.gradle.kts"
-      - "project-260510/backend/src/**"
-      - "project-260510/backend/Dockerfile"
+      - ".github/workflows/**"
+      - "backend/build.gradle.kts"
+      - "backend/settings.gradle.kts"
+      - "backend/src/**"
+      - "backend/Dockerfile"
 
 concurrency:
   group: backend-ci-${{ github.event.pull_request.number }}
