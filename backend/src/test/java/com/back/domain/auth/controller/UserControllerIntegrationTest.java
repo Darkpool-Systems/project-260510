@@ -1,16 +1,19 @@
-package com.back.auth.controller;
+package com.back.domain.auth.controller;
 
-import com.back.auth.domain.Provider;
-import com.back.auth.domain.Role;
-import com.back.auth.domain.User;
-import com.back.auth.repository.UserRepository;
-import com.back.auth.jwt.JwtTokenProvider;
+import com.back.TestContainersConfig;
+import com.back.domain.auth.domain.Provider;
+import com.back.domain.auth.domain.Role;
+import com.back.domain.auth.domain.User;
+import com.back.domain.auth.repository.UserRepository;
+import com.back.domain.auth.jwt.JwtTokenProvider;
+import com.back.domain.auth.service.TokenService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,11 +26,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@Import(TestContainersConfig.class)
 class UserControllerIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private JwtTokenProvider jwtTokenProvider;
     @Autowired private UserRepository userRepository;
+    @Autowired private TokenService tokenService;
 
     private MockMvc mockMvc;
     private User testUser;
@@ -51,6 +56,11 @@ class UserControllerIntegrationTest {
 
         accessToken = jwtTokenProvider.createAccessToken(
                 testUser.getId(), testUser.getEmail(), testUser.getRole().getKey());
+        String refreshToken = jwtTokenProvider.createRefreshToken(
+                testUser.getId(), testUser.getEmail(), testUser.getRole().getKey());
+
+        // Redis에 토큰 저장 — 인증 필터가 Redis 검증을 하므로 필수
+        tokenService.saveTokens(testUser.getId(), accessToken, refreshToken);
     }
 
     // ===== GET /api/user/me =====
@@ -71,7 +81,7 @@ class UserControllerIntegrationTest {
     @DisplayName("내 정보 조회 - 쿠키 없음 → 인증 거부")
     void getMyInfo_withoutCookie() throws Exception {
         mockMvc.perform(get("/api/user/me"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     // ===== PATCH /api/user/nickname =====
@@ -117,6 +127,6 @@ class UserControllerIntegrationTest {
         mockMvc.perform(patch("/api/user/nickname")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nickname\": \"새닉네임\"}"))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 }

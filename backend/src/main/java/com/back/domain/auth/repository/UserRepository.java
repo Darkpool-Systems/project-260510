@@ -1,6 +1,6 @@
-package com.back.auth.repository;
+package com.back.domain.auth.repository;
 
-import com.back.auth.domain.User;
+import com.back.domain.auth.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

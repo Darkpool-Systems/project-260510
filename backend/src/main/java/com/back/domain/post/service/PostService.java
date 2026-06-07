@@ -1,7 +1,7 @@
 package com.back.domain.post.service;
 
-import com.back.auth.domain.User;
-import com.back.auth.repository.UserRepository;
+import com.back.domain.auth.domain.User;
+import com.back.domain.auth.repository.UserRepository;
 import com.back.domain.chat.domain.ChatRoom;
 import com.back.domain.chat.service.ChatRoomService;
 import com.back.domain.post.domain.Post;

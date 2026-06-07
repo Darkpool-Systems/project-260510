@@ -1,8 +1,9 @@
-package com.back.auth.config;
+package com.back.domain.auth.config;
 
-import com.back.auth.jwt.JwtAuthenticationFilter;
-import com.back.auth.oauth.CustomOAuth2UserService;
-import com.back.auth.oauth.OAuth2SuccessHandler;
+import com.back.domain.auth.jwt.JwtAuthenticationFilter;
+import com.back.domain.auth.oauth.CustomOAuth2UserService;
+import com.back.domain.auth.oauth.OAuth2FailureHandler;
+import com.back.domain.auth.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -31,6 +33,7 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.frontend-url}")
@@ -62,15 +65,22 @@ public class SecurityConfig {
                                 userInfo.userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler)
                 )
                 // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                        )
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
-     * CORS 설정 - Next.js(:3000) → Spring Boot(:8080) 요청 허용
+     * CORS 설정 - Nginx를 통한 동일 Origin 구조이지만,
+     * 로컬 개발 시 직접 접속 대비 설정 유지
      * allowCredentials(true): HttpOnly 쿠키 전송에 필수
      */
     @Bean

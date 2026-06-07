@@ -1,17 +1,20 @@
-package com.back.auth.domain;
+package com.back.domain.auth.domain;
 
-import com.back.auth.repository.UserRepository;
+import com.back.TestContainersConfig;
+import com.back.domain.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@Import(TestContainersConfig.class)
 class UserRepositoryIntegrationTest {
 
     @Autowired private UserRepository userRepository;
