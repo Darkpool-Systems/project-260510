@@ -1,9 +1,6 @@
 package com.back.domain.auth.domain;
 
 import com.back.TestContainersConfig;
-import com.back.domain.auth.domain.Provider;
-import com.back.domain.auth.domain.Role;
-import com.back.domain.auth.domain.User;
 import com.back.domain.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
