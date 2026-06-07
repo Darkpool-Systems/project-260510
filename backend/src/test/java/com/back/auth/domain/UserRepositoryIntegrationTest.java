@@ -1,8 +1,5 @@
 package com.back.auth.domain;
 
-import com.back.auth.domain.Provider;
-import com.back.auth.domain.Role;
-import com.back.auth.domain.User;
 import com.back.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
