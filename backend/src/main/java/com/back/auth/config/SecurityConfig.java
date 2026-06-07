@@ -1,8 +1,8 @@
-package com.back.domain.auth.config;
+package com.back.auth.config;
 
-import com.back.domain.auth.jwt.JwtAuthenticationFilter;
-import com.back.domain.auth.oauth.CustomOAuth2UserService;
-import com.back.domain.auth.oauth.OAuth2SuccessHandler;
+import com.back.auth.jwt.JwtAuthenticationFilter;
+import com.back.auth.oauth.CustomOAuth2UserService;
+import com.back.auth.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

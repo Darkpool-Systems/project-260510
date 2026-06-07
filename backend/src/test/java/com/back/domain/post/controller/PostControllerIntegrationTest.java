@@ -1,10 +1,10 @@
 package com.back.domain.post.controller;
 
-import com.back.domain.auth.domain.Provider;
-import com.back.domain.auth.domain.Role;
-import com.back.domain.auth.domain.User;
-import com.back.domain.auth.jwt.JwtTokenProvider;
-import com.back.domain.auth.repository.UserRepository;
+import com.back.auth.domain.Provider;
+import com.back.auth.domain.Role;
+import com.back.auth.domain.User;
+import com.back.auth.jwt.JwtTokenProvider;
+import com.back.auth.repository.UserRepository;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.domain.post.repository.PostRepository;
 import jakarta.servlet.http.Cookie;
