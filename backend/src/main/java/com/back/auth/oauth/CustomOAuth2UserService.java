@@ -1,9 +1,9 @@
-package com.back.domain.auth.oauth;
+package com.back.auth.oauth;
 
-import com.back.domain.auth.domain.Provider;
-import com.back.domain.auth.domain.Role;
-import com.back.domain.auth.domain.User;
-import com.back.domain.auth.repository.UserRepository;
+import com.back.auth.domain.Provider;
+import com.back.auth.domain.Role;
+import com.back.auth.domain.User;
+import com.back.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;

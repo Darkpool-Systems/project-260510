@@ -1,8 +1,8 @@
-package com.back.domain.auth.controller;
+package com.back.auth.controller;
 
-import com.back.domain.auth.domain.User;
-import com.back.domain.auth.repository.UserRepository;
-import com.back.domain.auth.dto.NicknameUpdateRequest;
+import com.back.auth.domain.User;
+import com.back.auth.repository.UserRepository;
+import com.back.auth.dto.NicknameUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

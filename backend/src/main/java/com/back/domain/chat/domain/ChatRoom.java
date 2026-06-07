@@ -1,6 +1,6 @@
 package com.back.domain.chat.domain;
 
-import com.back.domain.auth.domain.User;
+import com.back.auth.domain.User;
 import com.back.domain.post.domain.Post;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

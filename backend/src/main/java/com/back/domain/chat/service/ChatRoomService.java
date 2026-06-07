@@ -1,6 +1,6 @@
 package com.back.domain.chat.service;
 
-import com.back.domain.auth.domain.User;
+import com.back.auth.domain.User;
 import com.back.domain.chat.domain.ChatRoom;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.domain.post.domain.Post;

@@ -1,4 +1,4 @@
-package com.back.domain.auth.jwt;
+package com.back.auth.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

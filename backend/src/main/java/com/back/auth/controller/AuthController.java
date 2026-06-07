@@ -1,6 +1,6 @@
-package com.back.domain.auth.controller;
+package com.back.auth.controller;
 
-import com.back.domain.auth.jwt.JwtTokenProvider;
+import com.back.auth.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
