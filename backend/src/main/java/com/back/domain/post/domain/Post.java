@@ -1,6 +1,6 @@
 package com.back.domain.post.domain;
 
-import com.back.auth.domain.User;
+import com.back.domain.auth.domain.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
