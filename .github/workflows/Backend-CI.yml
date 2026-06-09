@@ -7,17 +7,10 @@ on:
   pull_request:
     branches:
       - main
-      - dev
     types:
       - opened
       - reopened
       - synchronize
-    paths:
-      - ".github/workflows/**"
-      - "backend/build.gradle.kts"
-      - "backend/settings.gradle.kts"
-      - "backend/src/**"
-      - "backend/Dockerfile"
 
 concurrency:
   group: backend-ci-${{ github.event.pull_request.number }}
