@@ -74,6 +74,7 @@ class PostControllerIntegrationTest {
         void noToken() throws Exception {
 
         }
+
     }*/
 
     // ===== 채팅방 없이 게시글 작성 =====
