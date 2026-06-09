@@ -1,6 +1,6 @@
 package com.back.domain.auth.controller;
 
-import com.back.TestContainersConfig;
+import com.back.global.config.TestContainersConfig;
 import com.back.domain.auth.jwt.JwtTokenProvider;
 import com.back.domain.auth.service.TokenService;
 import jakarta.servlet.http.Cookie;
