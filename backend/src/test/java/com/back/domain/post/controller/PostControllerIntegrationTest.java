@@ -5,6 +5,7 @@ import com.back.domain.auth.domain.Role;
 import com.back.domain.auth.domain.User;
 import com.back.domain.auth.jwt.JwtTokenProvider;
 import com.back.domain.auth.repository.UserRepository;
+import com.back.domain.auth.service.TokenService;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.config.TestContainersConfig;
@@ -35,6 +36,7 @@ class PostControllerIntegrationTest {
 
     @Autowired private WebApplicationContext context;
     @Autowired private JwtTokenProvider jwtTokenProvider;
+    @Autowired private TokenService tokenService;
     @Autowired private UserRepository userRepository;
     @Autowired private PostRepository postRepository;
     @Autowired private ChatRoomRepository chatRoomRepository;
@@ -60,6 +62,11 @@ class PostControllerIntegrationTest {
         accessToken = jwtTokenProvider.createAccessToken(
                 savedUser.getId(), savedUser.getEmail(), "ROLE_USER");
 
+        String refreshToken = jwtTokenProvider.createRefreshToken(
+                savedUser.getId(), savedUser.getEmail(), "ROLE_USER");
+
+        tokenService.saveTokens(savedUser.getId(), accessToken, refreshToken);
+
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(context)
                 .apply(SecurityMockMvcConfigurers.springSecurity())
@@ -67,17 +74,26 @@ class PostControllerIntegrationTest {
     }
 
     // ===== 인증 =====
-    /*
+
     @Nested
     @DisplayName("인증")
     class Auth {
 
         @Test
-        @DisplayName("토큰 없이 요청 → 이 부분 oauth 코드 수정하면 다시 작성")
+        @DisplayName("토큰 없이 요청 → 401")
         void noToken() throws Exception {
-
+            mockMvc.perform(post("/posts")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "title": "스타트업 실패 후기",
+                                      "content": "1년 동안 개발했지만 실패했습니다.",
+                                      "createChatRoom": false
+                                    }
+                                    """))
+                    .andExpect(status().isUnauthorized());
         }
-    }*/
+    }
 
     // ===== 채팅방 없이 게시글 작성 =====
 
