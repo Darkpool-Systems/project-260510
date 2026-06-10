@@ -33,3 +33,4 @@ jwt:
 app:
   frontend-url: http://localhost
   frontend-new-user-url: http://localhost/change/nickname
+  frontend-dashboard-url: http://localhost/dashboard

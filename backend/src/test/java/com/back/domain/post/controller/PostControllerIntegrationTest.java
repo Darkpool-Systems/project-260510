@@ -7,6 +7,7 @@ import com.back.domain.auth.jwt.JwtTokenProvider;
 import com.back.domain.auth.repository.UserRepository;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.domain.post.repository.PostRepository;
+import com.back.global.config.TestContainersConfig;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.context.ActiveProfiles;
@@ -28,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestContainersConfig.class)
 class PostControllerIntegrationTest {
 
     @Autowired private WebApplicationContext context;
