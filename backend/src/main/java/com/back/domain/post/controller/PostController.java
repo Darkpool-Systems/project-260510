@@ -51,7 +51,7 @@ public class PostController {
     }
 
     /**
-     * GET /posts?page=0&size=20
+     * GET /posts?page=0&size=5
      * 게시글 목록 조회
      */
     @GetMapping

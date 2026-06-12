@@ -262,6 +262,7 @@ class PostControllerIntegrationTest {
                     .andExpect(jsonPath("$.content[0].likeCount").value(0))
                     .andExpect(jsonPath("$.content[0].commentCount").value(0))
                     .andExpect(jsonPath("$.content[0].createdAt").exists())
+                    .andExpect(jsonPath("$.content[0].updatedAt").exists())
                     // 상세 조회 전용 필드는 목록에 없어야 함
                     .andExpect(jsonPath("$.content[0].content").doesNotExist())
                     .andExpect(jsonPath("$.content[0].chatRoomExists").doesNotExist());
@@ -324,7 +325,8 @@ class PostControllerIntegrationTest {
                     .andExpect(jsonPath("$.likeCount").value(0))
                     .andExpect(jsonPath("$.commentCount").value(0))
                     .andExpect(jsonPath("$.chatRoomExists").value(false))
-                    .andExpect(jsonPath("$.createdAt").exists());
+                    .andExpect(jsonPath("$.createdAt").exists())
+                    .andExpect(jsonPath("$.updatedAt").exists());
         }
 
         @Test

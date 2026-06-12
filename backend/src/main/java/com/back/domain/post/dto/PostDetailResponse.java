@@ -22,6 +22,7 @@ public class PostDetailResponse {
     private final int commentCount;
     private final boolean chatRoomExists;
     private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
 
     public static PostDetailResponse of(Post post, boolean chatRoomExists) {
         return PostDetailResponse.builder()
@@ -33,6 +34,7 @@ public class PostDetailResponse {
                 .commentCount(post.getCommentCount())
                 .chatRoomExists(chatRoomExists)
                 .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
                 .build();
     }
 
