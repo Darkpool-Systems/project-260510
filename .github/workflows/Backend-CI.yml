@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - main
-      - dev
     types:
       - opened
       - reopened
@@ -51,7 +50,6 @@ jobs:
         run: chmod +x gradlew
 
       - name: Generate .env from Secret
-        if: ${{ secrets.DOT_ENV != '' }}
         run: printf "%s" "${{ secrets.DOT_ENV }}" > .env
 
       - name: Build without tests

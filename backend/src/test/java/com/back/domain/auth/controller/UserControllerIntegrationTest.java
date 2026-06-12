@@ -1,6 +1,6 @@
 package com.back.domain.auth.controller;
 
-import com.back.TestContainersConfig;
+import com.back.global.config.TestContainersConfig;
 import com.back.domain.auth.domain.Provider;
 import com.back.domain.auth.domain.Role;
 import com.back.domain.auth.domain.User;

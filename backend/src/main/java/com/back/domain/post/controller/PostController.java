@@ -2,21 +2,30 @@ package com.back.domain.post.controller;
 
 import com.back.domain.post.dto.PostCreateRequest;
 import com.back.domain.post.dto.PostCreateResponse;
+import com.back.domain.post.dto.PostDetailResponse;
+import com.back.domain.post.dto.PostListItemResponse;
 import com.back.domain.post.service.PostService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
-@RequestMapping("/posts")
+@RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class PostController {
 
@@ -39,6 +48,28 @@ public class PostController {
         PostCreateResponse response = postService.createPost(userId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * GET /posts?page=0&size=5
+     * 게시글 목록 조회
+     */
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getPosts(
+            @PageableDefault(size = 5) Pageable pageable
+    ) {
+        Page<PostListItemResponse> page = postService.getPosts(pageable);
+        return ResponseEntity.ok(Map.of("content", page.getContent()));
+    }
+
+    /**
+     * GET /posts/{postId}
+     * 게시글 상세 조회
+     */
+    @GetMapping("/{postId}")
+    public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long postId) {
+        PostDetailResponse response = postService.getPost(postId);
+        return ResponseEntity.ok(response);
     }
 }
 
