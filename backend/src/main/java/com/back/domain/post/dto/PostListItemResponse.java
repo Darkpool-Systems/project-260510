@@ -19,6 +19,7 @@ public class PostListItemResponse {
     private final int likeCount;
     private final int commentCount;
     private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
 
     public static PostListItemResponse from(Post post) {
         return PostListItemResponse.builder()
@@ -28,6 +29,7 @@ public class PostListItemResponse {
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())
                 .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
                 .build();
     }
 }
