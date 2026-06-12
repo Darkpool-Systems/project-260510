@@ -129,4 +129,33 @@ class UserControllerIntegrationTest {
                         .content("{\"nickname\": \"새닉네임\"}"))
                 .andExpect(status().isUnauthorized());
     }
+
+    // ===== GET /api/user/nickname/check =====
+
+    @Test
+    @DisplayName("닉네임 중복 조회 - 이미 사용 중인 닉네임 → isDuplicate: true")
+    void checkNickname_duplicate() throws Exception {
+        mockMvc.perform(get("/api/user/nickname/check")
+                        .param("nickname", "테스트유저"))   // setUp에서 저장한 닉네임
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isDuplicate").value(true));
+    }
+
+    @Test
+    @DisplayName("닉네임 중복 조회 - 사용 가능한 닉네임 → isDuplicate: false")
+    void checkNickname_available() throws Exception {
+        mockMvc.perform(get("/api/user/nickname/check")
+                        .param("nickname", "새로운닉네임"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isDuplicate").value(false));
+    }
+
+    @Test
+    @DisplayName("닉네임 중복 조회 - 인증 없이도 접근 가능 (비로그인 허용)")
+    void checkNickname_noAuthRequired() throws Exception {
+        // 쿠키 없이 요청해도 200 응답
+        mockMvc.perform(get("/api/user/nickname/check")
+                        .param("nickname", "아무닉네임"))
+                .andExpect(status().isOk());
+    }
 }
