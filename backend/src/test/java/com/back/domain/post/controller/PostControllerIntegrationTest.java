@@ -27,7 +27,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -47,6 +49,8 @@ class PostControllerIntegrationTest {
     private MockMvc mockMvc;
     private User savedUser;
     private String accessToken;
+    private User otherUser;
+    private String otherAccessToken;
 
     @BeforeEach
     void setUp() {
@@ -69,6 +73,22 @@ class PostControllerIntegrationTest {
                 savedUser.getId(), savedUser.getEmail(), "ROLE_USER");
 
         tokenService.saveTokens(savedUser.getId(), accessToken, refreshToken);
+
+        otherUser = userRepository.save(User.builder()
+                .email("other@gmail.com")
+                .nickname("다른사람")
+                .provider(Provider.GOOGLE)
+                .providerId("google-456")
+                .role(Role.USER)
+                .build());
+
+        otherAccessToken = jwtTokenProvider.createAccessToken(
+                otherUser.getId(), otherUser.getEmail(), "ROLE_USER");
+
+        String otherRefreshToken = jwtTokenProvider.createRefreshToken(
+                otherUser.getId(), otherUser.getEmail(), "ROLE_USER");
+
+        tokenService.saveTokens(otherUser.getId(), otherAccessToken, otherRefreshToken);
 
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(context)
@@ -355,6 +375,184 @@ class PostControllerIntegrationTest {
         @DisplayName("존재하지 않는 게시글 → 404")
         void notFound() throws Exception {
             mockMvc.perform(get("/api/posts/{postId}", 999999L))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+        }
+    }
+
+    // ===== 게시글 수정 =====
+
+    @Nested
+    @DisplayName("게시글 수정")
+    class UpdatePost {
+
+        @Test
+        @DisplayName("작성자가 수정 → 204, 내용 반영")
+        void success() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("원래 제목")
+                    .content("원래 내용")
+                    .build());
+
+            mockMvc.perform(patch("/api/posts/{postId}", post.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .cookie(new Cookie("access_token", accessToken))
+                            .content("""
+                                    {
+                                      "title": "수정된 제목",
+                                      "content": "수정된 내용"
+                                    }
+                                    """))
+                    .andExpect(status().isNoContent());
+
+            Post updated = postRepository.findById(post.getId()).orElseThrow();
+            assertThat(updated.getTitle()).isEqualTo("수정된 제목");
+            assertThat(updated.getContent()).isEqualTo("수정된 내용");
+        }
+
+        @Test
+        @DisplayName("토큰 없이 요청 → 401")
+        void noToken() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("원래 제목")
+                    .content("원래 내용")
+                    .build());
+
+            mockMvc.perform(patch("/api/posts/{postId}", post.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {
+                                      "title": "수정된 제목",
+                                      "content": "수정된 내용"
+                                    }
+                                    """))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("작성자가 아닌 사용자가 수정 → 403")
+        void forbidden() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("원래 제목")
+                    .content("원래 내용")
+                    .build());
+
+            mockMvc.perform(patch("/api/posts/{postId}", post.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .cookie(new Cookie("access_token", otherAccessToken))
+                            .content("""
+                                    {
+                                      "title": "수정된 제목",
+                                      "content": "수정된 내용"
+                                    }
+                                    """))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.code").value("POST_FORBIDDEN"));
+
+            Post unchanged = postRepository.findById(post.getId()).orElseThrow();
+            assertThat(unchanged.getTitle()).isEqualTo("원래 제목");
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 게시글 → 404")
+        void notFound() throws Exception {
+            mockMvc.perform(patch("/api/posts/{postId}", 999999L)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .cookie(new Cookie("access_token", accessToken))
+                            .content("""
+                                    {
+                                      "title": "수정된 제목",
+                                      "content": "수정된 내용"
+                                    }
+                                    """))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+        }
+
+        @Test
+        @DisplayName("제목 누락 → 400")
+        void missingTitle() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("원래 제목")
+                    .content("원래 내용")
+                    .build());
+
+            mockMvc.perform(patch("/api/posts/{postId}", post.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .cookie(new Cookie("access_token", accessToken))
+                            .content("""
+                                    {
+                                      "content": "수정된 내용"
+                                    }
+                                    """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+        }
+    }
+
+    // ===== 게시글 삭제 =====
+
+    @Nested
+    @DisplayName("게시글 삭제")
+    class DeletePost {
+
+        @Test
+        @DisplayName("작성자가 삭제 → 204, DB에서 제거")
+        void success() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("삭제될 게시글")
+                    .content("내용")
+                    .build());
+
+            mockMvc.perform(delete("/api/posts/{postId}", post.getId())
+                            .cookie(new Cookie("access_token", accessToken)))
+                    .andExpect(status().isNoContent());
+
+            assertThat(postRepository.findById(post.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("토큰 없이 요청 → 401")
+        void noToken() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("삭제될 게시글")
+                    .content("내용")
+                    .build());
+
+            mockMvc.perform(delete("/api/posts/{postId}", post.getId()))
+                    .andExpect(status().isUnauthorized());
+
+            assertThat(postRepository.findById(post.getId())).isPresent();
+        }
+
+        @Test
+        @DisplayName("작성자가 아닌 사용자가 삭제 → 403")
+        void forbidden() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("삭제될 게시글")
+                    .content("내용")
+                    .build());
+
+            mockMvc.perform(delete("/api/posts/{postId}", post.getId())
+                            .cookie(new Cookie("access_token", otherAccessToken)))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.code").value("POST_FORBIDDEN"));
+
+            assertThat(postRepository.findById(post.getId())).isPresent();
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 게시글 → 404")
+        void notFound() throws Exception {
+            mockMvc.perform(delete("/api/posts/{postId}", 999999L)
+                            .cookie(new Cookie("access_token", accessToken)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
         }
