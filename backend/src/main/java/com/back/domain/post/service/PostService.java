@@ -10,6 +10,7 @@ import com.back.domain.post.dto.PostCreateRequest;
 import com.back.domain.post.dto.PostCreateResponse;
 import com.back.domain.post.dto.PostDetailResponse;
 import com.back.domain.post.dto.PostListItemResponse;
+import com.back.domain.post.dto.PostUpdateRequest;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
@@ -79,5 +80,35 @@ public class PostService {
         boolean chatRoomExists = chatRoomRepository.existsByPostId(postId);
 
         return PostDetailResponse.of(post, chatRoomExists);
+    }
+
+    /**
+     * 게시글 수정 - 작성자만 가능
+     */
+    @Transactional
+    public void updatePost(Long userId, Long postId, PostUpdateRequest request) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (!post.isAuthor(userId)) {
+            throw new CustomException(ErrorCode.POST_FORBIDDEN);
+        }
+
+        post.update(request.getTitle(), request.getContent());
+    }
+
+    /**
+     * 게시글 삭제 - 작성자만 가능
+     */
+    @Transactional
+    public void deletePost(Long userId, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (!post.isAuthor(userId)) {
+            throw new CustomException(ErrorCode.POST_FORBIDDEN);
+        }
+
+        postRepository.delete(post);
     }
 }

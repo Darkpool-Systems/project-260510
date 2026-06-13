@@ -4,6 +4,7 @@ import com.back.domain.post.dto.PostCreateRequest;
 import com.back.domain.post.dto.PostCreateResponse;
 import com.back.domain.post.dto.PostDetailResponse;
 import com.back.domain.post.dto.PostListItemResponse;
+import com.back.domain.post.dto.PostUpdateRequest;
 import com.back.domain.post.service.PostService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
@@ -15,7 +16,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -70,6 +73,45 @@ public class PostController {
     public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long postId) {
         PostDetailResponse response = postService.getPost(postId);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * PATCH /posts/{postId}
+     * 게시글 수정 - 작성자만 가능
+     */
+    @PatchMapping("/{postId}")
+    public ResponseEntity<Void> updatePost(
+            @PathVariable Long postId,
+            @Valid @RequestBody PostUpdateRequest request,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Long userId = (Long) authentication.getPrincipal();
+        postService.updatePost(userId, postId, request);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * DELETE /posts/{postId}
+     * 게시글 삭제 - 작성자만 가능
+     */
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable Long postId,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Long userId = (Long) authentication.getPrincipal();
+        postService.deletePost(userId, postId);
+
+        return ResponseEntity.noContent().build();
     }
 }
 
