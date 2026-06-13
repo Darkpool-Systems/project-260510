@@ -334,3 +334,39 @@ const error = searchParams.get("error"); // "access_denied"
 - [ ] `/change/nickname` 페이지 → `PATCH /api/user/nickname` 호출
 - [ ] 로그아웃 → `POST /api/auth/logout` 호출
 - [ ] Redis 연동 확인 — 로그아웃 후 같은 토큰으로 재접근 시 401
+
+---
+
+## 12. 닉네임 중복 조회
+
+```
+GET /api/user/nickname/check?nickname={nickname}
+인증 필요: ❌
+```
+
+닉네임 중복 여부를 확인한다. 인증 없이도 호출 가능하다.
+
+| 응답 | Body | 설명 |
+|------|------|------|
+| 200 | `{ "isDuplicate": true }` | 이미 사용 중인 닉네임 |
+| 200 | `{ "isDuplicate": false }` | 사용 가능한 닉네임 |
+
+**요청 예시:**
+```
+GET /api/user/nickname/check?nickname=홍길동
+```
+
+**응답 예시:**
+```json
+{ "isDuplicate": true }
+```
+
+**프론트엔드 사용 예시:**
+```tsx
+const checkNickname = async (nickname: string): Promise<boolean> => {
+  const { data } = await api.get("/api/user/nickname/check", {
+    params: { nickname },
+  });
+  return data.isDuplicate; // true: 중복 / false: 사용 가능
+};
+```

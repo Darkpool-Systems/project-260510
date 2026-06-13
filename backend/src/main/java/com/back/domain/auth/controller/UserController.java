@@ -21,6 +21,17 @@ public class UserController {
 
     private final UserRepository userRepository;
 
+    /**
+     * 닉네임 중복 조회
+     * - 인증 불필요 (회원가입 흐름에서 비로그인 상태에서도 호출 가능)
+     * - true: 이미 사용 중 / false: 사용 가능
+     */
+    @GetMapping("/nickname/check")
+    public ResponseEntity<?> checkNicknameDuplicate(@RequestParam String nickname) {
+        boolean isDuplicate = userRepository.existsByNickname(nickname);
+        return ResponseEntity.ok(Map.of("isDuplicate", isDuplicate));
+    }
+
     /** 내 정보 조회 */
     @GetMapping("/me")
     public ResponseEntity<?> getMyInfo(Authentication authentication) {
