@@ -74,4 +74,14 @@ public class Post {
         this.commentCount = Math.max(0, this.commentCount - 1);
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isAuthor(Long userId) {
+        return this.author.getId().equals(userId);
+    }
 }
