@@ -5,6 +5,7 @@ import com.back.domain.post.dto.PostCreateResponse;
 import com.back.domain.post.dto.PostDetailResponse;
 import com.back.domain.post.dto.PostListItemResponse;
 import com.back.domain.post.dto.PostUpdateRequest;
+import com.back.domain.post.service.PostLikeService;
 import com.back.domain.post.service.PostService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
@@ -33,6 +34,7 @@ import java.util.Map;
 public class PostController {
 
     private final PostService postService;
+    private final PostLikeService postLikeService;
 
     /**
      * POST /posts
@@ -110,6 +112,25 @@ public class PostController {
 
         Long userId = (Long) authentication.getPrincipal();
         postService.deletePost(userId, postId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * POST /posts/{postId}/likes
+     * 좋아요 토글 - 좋아요/좋아요 취소
+     */
+    @PostMapping("/{postId}/likes")
+    public ResponseEntity<Void> toggleLike(
+            @PathVariable Long postId,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Long userId = (Long) authentication.getPrincipal();
+        postLikeService.toggleLike(userId, postId);
 
         return ResponseEntity.noContent().build();
     }
