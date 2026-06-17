@@ -9,6 +9,7 @@ import com.back.domain.auth.service.TokenService;
 import com.back.domain.chat.domain.ChatRoom;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.domain.post.domain.Post;
+import com.back.domain.post.repository.PostLikeRepository;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.config.TestContainersConfig;
 import jakarta.servlet.http.Cookie;
@@ -44,6 +45,7 @@ class PostControllerIntegrationTest {
     @Autowired private TokenService tokenService;
     @Autowired private UserRepository userRepository;
     @Autowired private PostRepository postRepository;
+    @Autowired private PostLikeRepository postLikeRepository;
     @Autowired private ChatRoomRepository chatRoomRepository;
 
     private MockMvc mockMvc;
@@ -55,6 +57,7 @@ class PostControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         chatRoomRepository.deleteAll();
+        postLikeRepository.deleteAll();
         postRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -552,6 +555,101 @@ class PostControllerIntegrationTest {
         @DisplayName("존재하지 않는 게시글 → 404")
         void notFound() throws Exception {
             mockMvc.perform(delete("/api/posts/{postId}", 999999L)
+                            .cookie(new Cookie("access_token", accessToken)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+        }
+    }
+
+    // ===== 게시글 좋아요 =====
+
+    @Nested
+    @DisplayName("게시글 좋아요")
+    class ToggleLike {
+
+        @Test
+        @DisplayName("좋아요 누르면 → 204, likeCount +1, PostLike 생성")
+        void like() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("좋아요 테스트")
+                    .content("내용")
+                    .build());
+
+            mockMvc.perform(post("/api/posts/{postId}/likes", post.getId())
+                            .cookie(new Cookie("access_token", accessToken)))
+                    .andExpect(status().isNoContent());
+
+            Post updated = postRepository.findById(post.getId()).orElseThrow();
+            assertThat(updated.getLikeCount()).isEqualTo(1);
+            assertThat(postLikeRepository.existsByPostIdAndUserId(post.getId(), savedUser.getId())).isTrue();
+        }
+
+        @Test
+        @DisplayName("좋아요 후 다시 누르면 → 204, likeCount 0, PostLike 삭제 (토글)")
+        void toggleCancel() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("좋아요 토글 테스트")
+                    .content("내용")
+                    .build());
+
+            // 첫 번째: 좋아요
+            mockMvc.perform(post("/api/posts/{postId}/likes", post.getId())
+                            .cookie(new Cookie("access_token", accessToken)))
+                    .andExpect(status().isNoContent());
+
+            // 두 번째: 좋아요 취소
+            mockMvc.perform(post("/api/posts/{postId}/likes", post.getId())
+                            .cookie(new Cookie("access_token", accessToken)))
+                    .andExpect(status().isNoContent());
+
+            Post updated = postRepository.findById(post.getId()).orElseThrow();
+            assertThat(updated.getLikeCount()).isEqualTo(0);
+            assertThat(postLikeRepository.existsByPostIdAndUserId(post.getId(), savedUser.getId())).isFalse();
+        }
+
+        @Test
+        @DisplayName("두 명이 각각 좋아요 → likeCount 2")
+        void multipleUsers() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("여러 명 좋아요 테스트")
+                    .content("내용")
+                    .build());
+
+            mockMvc.perform(post("/api/posts/{postId}/likes", post.getId())
+                            .cookie(new Cookie("access_token", accessToken)))
+                    .andExpect(status().isNoContent());
+
+            mockMvc.perform(post("/api/posts/{postId}/likes", post.getId())
+                            .cookie(new Cookie("access_token", otherAccessToken)))
+                    .andExpect(status().isNoContent());
+
+            Post updated = postRepository.findById(post.getId()).orElseThrow();
+            assertThat(updated.getLikeCount()).isEqualTo(2);
+            assertThat(postLikeRepository.count()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("토큰 없이 좋아요 요청 → 401")
+        void noToken() throws Exception {
+            Post post = postRepository.save(Post.builder()
+                    .author(savedUser)
+                    .title("좋아요 인증 테스트")
+                    .content("내용")
+                    .build());
+
+            mockMvc.perform(post("/api/posts/{postId}/likes", post.getId()))
+                    .andExpect(status().isUnauthorized());
+
+            assertThat(postLikeRepository.count()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 게시글에 좋아요 → 404")
+        void postNotFound() throws Exception {
+            mockMvc.perform(post("/api/posts/{postId}/likes", 999999L)
                             .cookie(new Cookie("access_token", accessToken)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
