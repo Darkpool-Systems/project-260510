@@ -311,10 +311,10 @@ class PostControllerIntegrationTest {
                         .build());
             }
 
-            // 기본 size=5
+            // 기본 size=10
             mockMvc.perform(get("/api/posts"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.content.length()").value(5));
+                    .andExpect(jsonPath("$.content.length()").value(10));
 
             // size=10, page=1
             mockMvc.perform(get("/api/posts").param("page", "1").param("size", "10"))

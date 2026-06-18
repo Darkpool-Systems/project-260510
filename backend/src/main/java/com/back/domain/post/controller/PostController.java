@@ -61,7 +61,7 @@ public class PostController {
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getPosts(
-            @PageableDefault(size = 5) Pageable pageable
+            @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<PostListItemResponse> page = postService.getPosts(pageable);
         return ResponseEntity.ok(Map.of("content", page.getContent()));
