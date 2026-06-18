@@ -32,6 +32,14 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    /**
+     * 낙관적 락용 버전 필드
+     * - JPA가 UPDATE 시 WHERE version = ? 조건을 자동으로 추가
+     * - 다른 트랜잭션이 먼저 수정했으면 버전이 달라서 ObjectOptimisticLockingFailureException 발생
+     */
+    @Version
+    private Long version;
+
     @Column(nullable = false)
     private int likeCount = 0;
 
