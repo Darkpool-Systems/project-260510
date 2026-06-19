@@ -1,10 +1,6 @@
 package com.back.domain.post.controller;
 
-import com.back.domain.post.dto.PostCreateRequest;
-import com.back.domain.post.dto.PostCreateResponse;
-import com.back.domain.post.dto.PostDetailResponse;
-import com.back.domain.post.dto.PostListItemResponse;
-import com.back.domain.post.dto.PostUpdateRequest;
+import com.back.domain.post.dto.*;
 import com.back.domain.post.service.PostLikeService;
 import com.back.domain.post.service.PostService;
 import com.back.global.exception.CustomException;
@@ -17,14 +13,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -56,14 +45,15 @@ public class PostController {
     }
 
     /**
-     * GET /posts?page=0&size=5
+     * GET /posts?sortBy=latest|likes|comments&page=0&size=10
      * 게시글 목록 조회
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getPosts(
+            @RequestParam(defaultValue = "latest") String sortBy,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        Page<PostListItemResponse> page = postService.getPosts(pageable);
+        Page<PostListItemResponse> page = postService.getPosts(sortBy, pageable);
         return ResponseEntity.ok(Map.of("content", page.getContent()));
     }
 
