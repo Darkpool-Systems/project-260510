@@ -62,10 +62,15 @@ public class PostService {
 
     /**
      * 게시글 목록 조회
+     * @param sortBy latest(최신순) | likes(좋아요순) | comments(댓글수순), 기본값 latest
      */
     @Transactional(readOnly = true)
-    public Page<PostListItemResponse> getPosts(Pageable pageable) {
-        Page<Post> posts = postRepository.findAllWithAuthor(pageable);
+    public Page<PostListItemResponse> getPosts(String sortBy, Pageable pageable) {
+        Page<Post> posts = switch (sortBy) {
+            case "likes"    -> postRepository.findAllOrderByLikeCountDesc(pageable);
+            case "comments" -> postRepository.findAllOrderByCommentCountDesc(pageable);
+            default         -> postRepository.findAllOrderByCreatedAtDesc(pageable);
+        };
         return posts.map(PostListItemResponse::from);
     }
 
