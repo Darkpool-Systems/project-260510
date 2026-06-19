@@ -8,6 +8,7 @@ import com.back.domain.auth.repository.UserRepository;
 import com.back.domain.auth.service.TokenService;
 import com.back.domain.chat.domain.ChatRoom;
 import com.back.domain.chat.repository.ChatRoomRepository;
+import com.back.domain.comment.repository.CommentRepository;
 import com.back.domain.post.domain.Post;
 import com.back.domain.post.repository.PostLikeRepository;
 import com.back.domain.post.repository.PostRepository;
@@ -47,6 +48,7 @@ class PostControllerIntegrationTest {
     @Autowired private PostRepository postRepository;
     @Autowired private PostLikeRepository postLikeRepository;
     @Autowired private ChatRoomRepository chatRoomRepository;
+    @Autowired private CommentRepository commentRepository;
 
     private MockMvc mockMvc;
     private User savedUser;
@@ -58,6 +60,7 @@ class PostControllerIntegrationTest {
     void setUp() {
         chatRoomRepository.deleteAll();
         postLikeRepository.deleteAll();
+        commentRepository.deleteAll();
         postRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -320,6 +323,78 @@ class PostControllerIntegrationTest {
             mockMvc.perform(get("/api/posts").param("page", "1").param("size", "10"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.content.length()").value(10));
+        }
+
+        @Test
+        @DisplayName("sort=latest → 최신순 반환 (기본값과 동일)")
+        void sortByLatest() throws Exception {
+            postRepository.save(Post.builder().author(savedUser).title("오래된 글").content("내용").build());
+            postRepository.save(Post.builder().author(savedUser).title("최신 글").content("내용").build());
+
+            mockMvc.perform(get("/api/posts").param("sortBy", "latest"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].title").value("최신 글"))
+                    .andExpect(jsonPath("$.content[1].title").value("오래된 글"));
+        }
+
+        @Test
+        @DisplayName("sort 파라미터 없으면 최신순 반환")
+        void sortDefault() throws Exception {
+            postRepository.save(Post.builder().author(savedUser).title("오래된 글").content("내용").build());
+            postRepository.save(Post.builder().author(savedUser).title("최신 글").content("내용").build());
+
+            mockMvc.perform(get("/api/posts"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].title").value("최신 글"))
+                    .andExpect(jsonPath("$.content[1].title").value("오래된 글"));
+        }
+
+        @Test
+        @DisplayName("sort=likes → 좋아요 많은 순 반환")
+        void sortByLikes() throws Exception {
+            postRepository.save(Post.builder().author(savedUser).title("좋아요 적은 글").content("내용").build());
+            Post highLike = postRepository.save(Post.builder().author(savedUser).title("좋아요 많은 글").content("내용").build());
+
+            mockMvc.perform(post("/api/posts/{postId}/likes", highLike.getId())
+                            .cookie(new Cookie("access_token", accessToken)))
+                    .andExpect(status().isNoContent());
+
+            mockMvc.perform(get("/api/posts").param("sortBy", "likes"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].title").value("좋아요 많은 글"))
+                    .andExpect(jsonPath("$.content[1].title").value("좋아요 적은 글"));
+        }
+
+        @Test
+        @DisplayName("sort=comments → 댓글 많은 순 반환")
+        void sortByComments() throws Exception {
+            postRepository.save(Post.builder().author(savedUser).title("댓글 없는 글").content("내용").build());
+            Post hasComment = postRepository.save(Post.builder().author(savedUser).title("댓글 있는 글").content("내용").build());
+
+            mockMvc.perform(post("/api/posts/{postId}/comments", hasComment.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .cookie(new Cookie("access_token", accessToken))
+                            .content("""
+                                    { "content": "댓글입니다", "parentCommentId": null }
+                                    """))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(get("/api/posts").param("sortBy", "comments"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].title").value("댓글 있는 글"))
+                    .andExpect(jsonPath("$.content[1].title").value("댓글 없는 글"));
+        }
+
+        @Test
+        @DisplayName("알 수 없는 sort 값 → 최신순으로 fallback")
+        void sortUnknownFallback() throws Exception {
+            postRepository.save(Post.builder().author(savedUser).title("오래된 글").content("내용").build());
+            postRepository.save(Post.builder().author(savedUser).title("최신 글").content("내용").build());
+
+            mockMvc.perform(get("/api/posts").param("sortBy", "invalid"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].title").value("최신 글"))
+                    .andExpect(jsonPath("$.content[1].title").value("오래된 글"));
         }
     }
 

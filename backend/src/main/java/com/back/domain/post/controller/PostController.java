@@ -45,15 +45,15 @@ public class PostController {
     }
 
     /**
-     * GET /posts?sort=latest|likes|comments&page=0&size=10
+     * GET /posts?sortBy=latest|likes|comments&page=0&size=10
      * 게시글 목록 조회
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getPosts(
-            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(defaultValue = "latest") String sortBy,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        Page<PostListItemResponse> page = postService.getPosts(sort, pageable);
+        Page<PostListItemResponse> page = postService.getPosts(sortBy, pageable);
         return ResponseEntity.ok(Map.of("content", page.getContent()));
     }
 
