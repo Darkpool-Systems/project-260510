@@ -45,6 +45,13 @@ jwt:
   access-token-expiry: 3600000
   refresh-token-expiry: 604800000
 
+r2:
+  account-id: ${R2_ACCOUNT_ID}
+  access-key: ${R2_ACCESS_KEY}
+  secret-key: ${R2_SECRET_KEY}
+  bucket: ${R2_BUCKET}
+  public-base-url: ${R2_PUBLIC_BASE_URL}
+
 app:
   frontend-url: http://localhost
   frontend-new-user-url: http://localhost/change/nickname
