@@ -28,6 +28,7 @@ public class PostService {
     private final ChatRoomService chatRoomService;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final PostEmbeddingService postEmbeddingService;
 
     @Transactional
     public PostCreateResponse createPost(Long userId, PostCreateRequest request) {
@@ -41,6 +42,8 @@ public class PostService {
                 .build();
 
         postRepository.save(post);
+
+        postEmbeddingService.saveOrUpdateEmbedding(post);
 
         // 채팅방 생성 요청이 있을 때만 ChatRoomService에 위임
         Long chatRoomId = null;
@@ -100,6 +103,8 @@ public class PostService {
         }
 
         post.update(request.getTitle(), request.getContent());
+
+        postEmbeddingService.saveOrUpdateEmbedding(post);
     }
 
     /**

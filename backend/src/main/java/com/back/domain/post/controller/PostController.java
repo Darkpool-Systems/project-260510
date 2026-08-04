@@ -2,6 +2,7 @@ package com.back.domain.post.controller;
 
 import com.back.domain.post.dto.*;
 import com.back.domain.post.service.PostLikeService;
+import com.back.domain.post.service.PostRecommendationService;
 import com.back.domain.post.service.PostService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,6 +26,7 @@ public class PostController {
 
     private final PostService postService;
     private final PostLikeService postLikeService;
+    private final PostRecommendationService postRecommendationService;
 
     /**
      * POST /posts
@@ -64,6 +67,16 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long postId) {
         PostDetailResponse response = postService.getPost(postId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /posts/{postId}/recommendations
+     * 유사 게시글 Top-5 추천 (임베딩 코사인 유사도 기반)
+     */
+    @GetMapping("/{postId}/recommendations")
+    public ResponseEntity<List<PostRecommendationItemResponse>> getRecommendations(@PathVariable Long postId) {
+        List<PostRecommendationItemResponse> response = postRecommendationService.recommend(postId);
         return ResponseEntity.ok(response);
     }
 
