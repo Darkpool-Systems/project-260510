@@ -30,6 +30,10 @@ jwt:
   access-token-expiry: 3600000
   refresh-token-expiry: 604800000
 
+openai:
+  api-key: test-dummy-key
+  embedding-model: text-embedding-3-small
+
 app:
   frontend-url: http://localhost
   frontend-new-user-url: http://localhost/change/nickname

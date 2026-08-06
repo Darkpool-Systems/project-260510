@@ -46,6 +46,9 @@ class PostServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PostEmbeddingService postEmbeddingService;
+
     private User mockUser;
 
     @BeforeEach
