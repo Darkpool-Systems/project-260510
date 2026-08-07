@@ -12,6 +12,7 @@ import com.back.domain.post.dto.PostDetailResponse;
 import com.back.domain.post.dto.PostListItemResponse;
 import com.back.domain.post.dto.PostUpdateRequest;
 import com.back.domain.post.repository.PostRepository;
+import com.back.domain.upload.service.UploadService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class PostService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final PostEmbeddingService postEmbeddingService;
+    private final UploadService uploadService;
 
     @Transactional
     public PostCreateResponse createPost(Long userId, PostCreateRequest request) {
@@ -42,6 +44,8 @@ public class PostService {
                 .build();
 
         postRepository.save(post);
+
+        uploadService.commitImages(post.getContent());
 
         postEmbeddingService.saveOrUpdateEmbedding(post);
 
@@ -103,6 +107,8 @@ public class PostService {
         }
 
         post.update(request.getTitle(), request.getContent());
+
+        uploadService.commitImages(post.getContent());
 
         postEmbeddingService.saveOrUpdateEmbedding(post);
     }
