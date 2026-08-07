@@ -3,19 +3,14 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:h2:mem:backdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 
     show-sql: true
     properties:
@@ -44,6 +39,17 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiry: 3600000
   refresh-token-expiry: 604800000
+
+r2:
+  account-id: ${R2_ACCOUNT_ID}
+  access-key: ${R2_ACCESS_KEY}
+  secret-key: ${R2_SECRET_KEY}
+  bucket: ${R2_BUCKET}
+  public-base-url: ${R2_PUBLIC_BASE_URL}
+
+orphan:
+  pending-expiry-days: 14
+  cleanup-cron: "0 0 4 * * *"
 
 app:
   frontend-url: http://localhost

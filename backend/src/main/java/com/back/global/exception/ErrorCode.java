@@ -34,6 +34,10 @@ public enum ErrorCode {
     EMBEDDING_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "게시글 임베딩 생성에 실패했습니다."),
     POST_EMBEDDING_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글의 임베딩 정보를 찾을 수 없습니다."),
 
+    // Upload
+    UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 파일 형식입니다."),
+    FILE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "파일 크기가 너무 큽니다."),
+
     // Common
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");

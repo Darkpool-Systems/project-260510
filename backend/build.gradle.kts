@@ -19,6 +19,9 @@ repositories {
 }
 
 dependencies {
+    // AWS SDK v2 — Cloudflare R2(S3 호환) 연동용. BOM으로 버전 통일
+    implementation(platform("software.amazon.awssdk:bom:2.46.8"))
+    implementation("software.amazon.awssdk:s3") // S3Client + S3Presigner 포함
     implementation("org.springframework.boot:spring-boot-h2console")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -31,7 +34,8 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    runtimeOnly("com.h2database:h2")
+    runtimeOnly("com.h2database:h2") // test 프로필용
+    runtimeOnly("com.mysql:mysql-connector-j") // dev/운영 프로필용
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
