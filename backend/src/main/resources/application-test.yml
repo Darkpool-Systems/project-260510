@@ -34,6 +34,13 @@ openai:
   api-key: test-dummy-key
   embedding-model: text-embedding-3-small
 
+r2:
+  account-id: test-account-id
+  access-key: test-access-key
+  secret-key: test-secret-key
+  bucket: test-bucket
+  public-base-url: https://test.r2.dev
+
 app:
   frontend-url: http://localhost
   frontend-new-user-url: http://localhost/change/nickname

@@ -10,6 +10,7 @@ import com.back.domain.post.domain.Post;
 import com.back.domain.post.dto.PostCreateRequest;
 import com.back.domain.post.dto.PostCreateResponse;
 import com.back.domain.post.repository.PostRepository;
+import com.back.domain.upload.service.UploadService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ class PostServiceTest {
 
     @Mock
     private PostEmbeddingService postEmbeddingService;
+
+    @Mock
+    private UploadService uploadService;
 
     private User mockUser;
 
