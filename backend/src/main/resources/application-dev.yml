@@ -47,6 +47,10 @@ r2:
   bucket: ${R2_BUCKET}
   public-base-url: ${R2_PUBLIC_BASE_URL}
 
+orphan:
+  pending-expiry-days: 14
+  cleanup-cron: "0 0 4 * * *"
+
 app:
   frontend-url: http://localhost
   frontend-new-user-url: http://localhost/change/nickname
