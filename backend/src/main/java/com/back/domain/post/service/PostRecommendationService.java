@@ -56,6 +56,7 @@ public class PostRecommendationService {
     private PostRecommendationItemResponse toItem(PostEmbedding embedding, int rank) {
         return PostRecommendationItemResponse.builder()
                 .rank(rank)
+                .postId(embedding.getPostId())
                 .title(embedding.getPost().getTitle())
                 .content(embedding.getPost().getContent())
                 .build();
