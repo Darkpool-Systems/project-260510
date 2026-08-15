@@ -33,11 +33,13 @@ GET /api/posts/{postId}/recommendations
 [
   {
     "rank": 1,
+    "postId": 12,
     "title": "얼큰한 김치찌개 맛있게 끓이는 법",
     "content": "잘 익은 김치와 돼지고기 목살을 볶아..."
   },
   {
     "rank": 2,
+    "postId": 15,
     "title": "구수한 된장찌개 황금 레시피",
     "content": "멸치와 다시마로 우린 육수에..."
   }
@@ -47,6 +49,7 @@ GET /api/posts/{postId}/recommendations
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | `rank` | int | 유사도 순위 (1~5) |
+| `postId` | Long | 추천 게시글 ID |
 | `title` | String | 추천 게시글 제목 |
 | `content` | String | 추천 게시글 내용 |
 

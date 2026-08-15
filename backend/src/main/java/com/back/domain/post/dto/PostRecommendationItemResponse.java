@@ -11,6 +11,7 @@ import lombok.Getter;
 public class PostRecommendationItemResponse {
 
     private final int rank;
+    private final Long postId;
     private final String title;
     private final String content;
 }
