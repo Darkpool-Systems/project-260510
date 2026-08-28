@@ -102,7 +102,7 @@ public class PostService {
      * 게시글 수정 - 작성자만 가능
      */
     @Transactional
-    public void updatePost(Long userId, Long postId, PostUpdateRequest request) {
+    public PostDetailResponse updatePost(Long userId, Long postId, PostUpdateRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
@@ -116,6 +116,9 @@ public class PostService {
         uploadService.syncImages(oldContent, post.getContent());
 
         postEmbeddingService.saveOrUpdateEmbedding(post);
+
+        boolean chatRoomExists = chatRoomRepository.existsByPostId(postId);
+        return PostDetailResponse.of(post, chatRoomExists);
     }
 
     /**
