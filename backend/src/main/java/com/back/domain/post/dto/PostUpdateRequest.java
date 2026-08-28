@@ -14,5 +14,6 @@ public class PostUpdateRequest {
     private String title;
 
     @NotBlank(message = "내용은 필수입니다.")
+    @Size(max = 50_000, message = "본문은 50,000자 이하여야 합니다.")
     private String content;
 }
