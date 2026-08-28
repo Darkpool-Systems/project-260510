@@ -121,6 +121,21 @@ public class UploadService {
         return keys;
     }
 
+    /**
+     * 게시글 삭제 시, 그 게시글이 쓰던 이미지들을 다시 PENDING으로 되돌림
+     * - 실제 R2/DB 삭제는 하지 않고, 스케줄러(OrphanImageCleaner)가 나중에 정리하도록 표시만 함
+     */
+    @Transactional
+    public void uncommitImages(String content) {
+        List<String> keys = extractKeys(content);
+        if (keys.isEmpty()) {
+            return;
+        }
+
+        List<UploadedImage> images = uploadedImageRepository.findAllByKeyIn(keys);
+        images.forEach(UploadedImage::uncommit);
+    }
+
     private String generateKey(Long userId, String filename) {
         String extension = extractExtension(filename);
         return "posts/%d/%s%s".formatted(userId, UUID.randomUUID(), extension);

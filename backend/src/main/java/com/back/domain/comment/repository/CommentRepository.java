@@ -22,4 +22,14 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      */
     @Query("SELECT c FROM Comment c JOIN FETCH c.author WHERE c.id = :id")
     Optional<Comment> findByIdWithAuthor(@Param("id") Long id);
+
+    /**
+     * 게시글 삭제 시 자식(대댓글)을 먼저 지우기 위한 조건부 삭제
+     */
+    void deleteAllByPostIdAndParentIsNotNull(Long postId);
+
+    /**
+     * 대댓글 삭제 이후, 최상위 댓글 삭제
+     */
+    void deleteAllByPostIdAndParentIsNull(Long postId);
 }

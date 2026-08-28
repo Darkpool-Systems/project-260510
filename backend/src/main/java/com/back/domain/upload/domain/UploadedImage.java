@@ -50,4 +50,8 @@ public class UploadedImage {
     public void commit() {
         this.status = UploadStatus.COMMITTED;
     }
+
+    public void uncommit() {
+        this.status = UploadStatus.PENDING;
+    }
 }

@@ -34,6 +34,11 @@ public class PostEmbeddingService {
                 );
     }
 
+    @Transactional
+    public void deleteEmbedding(Post post) {
+        postEmbeddingRepository.deleteById(post.getId());
+    }
+
     private String buildEmbeddingText(Post post) {
         return post.getTitle() + "\n\n" + post.getContent();
     }
