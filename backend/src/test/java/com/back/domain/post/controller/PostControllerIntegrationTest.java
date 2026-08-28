@@ -470,7 +470,7 @@ class PostControllerIntegrationTest {
     class UpdatePost {
 
         @Test
-        @DisplayName("작성자가 수정 → 204, 내용 반영")
+        @DisplayName("작성자가 수정 → 200, 수정된 게시글 반환")
         void success() throws Exception {
             Post post = postRepository.save(Post.builder()
                     .author(savedUser)
@@ -487,7 +487,11 @@ class PostControllerIntegrationTest {
                                       "content": "수정된 내용"
                                     }
                                     """))
-                    .andExpect(status().isNoContent());
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(post.getId()))
+                    .andExpect(jsonPath("$.title").value("수정된 제목"))
+                    .andExpect(jsonPath("$.content").value("수정된 내용"))
+                    .andExpect(jsonPath("$.chatRoomExists").value(false));
 
             Post updated = postRepository.findById(post.getId()).orElseThrow();
             assertThat(updated.getTitle()).isEqualTo("수정된 제목");
