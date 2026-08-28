@@ -9,4 +9,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
      * 게시글에 연결된 채팅방 존재 여부 확인
      */
     boolean existsByPostId(Long postId);
+
+    void deleteByPostId(Long postId);
 }

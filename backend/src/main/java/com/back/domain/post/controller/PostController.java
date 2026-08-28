@@ -85,7 +85,7 @@ public class PostController {
      * 게시글 수정 - 작성자만 가능
      */
     @PatchMapping("/{postId}")
-    public ResponseEntity<Void> updatePost(
+    public ResponseEntity<PostDetailResponse> updatePost(
             @PathVariable Long postId,
             @Valid @RequestBody PostUpdateRequest request,
             Authentication authentication
@@ -95,9 +95,9 @@ public class PostController {
         }
 
         Long userId = (Long) authentication.getPrincipal();
-        postService.updatePost(userId, postId, request);
+        PostDetailResponse response = postService.updatePost(userId, postId, request);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(response);
     }
 
     /**

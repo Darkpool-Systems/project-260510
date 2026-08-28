@@ -5,6 +5,7 @@ import com.back.domain.auth.repository.UserRepository;
 import com.back.domain.chat.domain.ChatRoom;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.domain.chat.service.ChatRoomService;
+import com.back.domain.comment.repository.CommentRepository;
 import com.back.domain.post.domain.Post;
 import com.back.domain.post.dto.PostCreateRequest;
 import com.back.domain.post.dto.PostCreateResponse;
@@ -12,6 +13,7 @@ import com.back.domain.post.dto.PostDetailResponse;
 import com.back.domain.post.dto.PostListItemResponse;
 import com.back.domain.post.dto.PostUpdateRequest;
 import com.back.domain.post.repository.PostRepository;
+import com.back.domain.post.repository.PostLikeRepository;
 import com.back.domain.upload.service.UploadService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
@@ -28,6 +30,8 @@ public class PostService {
     private final PostRepository postRepository;
     private final ChatRoomService chatRoomService;
     private final ChatRoomRepository chatRoomRepository;
+    private final CommentRepository commentRepository;
+    private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
     private final PostEmbeddingService postEmbeddingService;
     private final UploadService uploadService;
@@ -98,7 +102,7 @@ public class PostService {
      * 게시글 수정 - 작성자만 가능
      */
     @Transactional
-    public void updatePost(Long userId, Long postId, PostUpdateRequest request) {
+    public PostDetailResponse updatePost(Long userId, Long postId, PostUpdateRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
@@ -106,15 +110,20 @@ public class PostService {
             throw new CustomException(ErrorCode.POST_FORBIDDEN);
         }
 
+        String oldContent = post.getContent();
         post.update(request.getTitle(), request.getContent());
 
-        uploadService.commitImages(post.getContent());
+        uploadService.syncImages(oldContent, post.getContent());
 
         postEmbeddingService.saveOrUpdateEmbedding(post);
+
+        boolean chatRoomExists = chatRoomRepository.existsByPostId(postId);
+        return PostDetailResponse.of(post, chatRoomExists);
     }
 
     /**
      * 게시글 삭제 - 작성자만 가능
+     * 자식(post_embeddings, comments, post_likes, chat_rooms)을 먼저 정리한 뒤 삭제
      */
     @Transactional
     public void deletePost(Long userId, Long postId) {
@@ -124,6 +133,13 @@ public class PostService {
         if (!post.isAuthor(userId)) {
             throw new CustomException(ErrorCode.POST_FORBIDDEN);
         }
+
+        uploadService.uncommitImages(post.getContent());
+        postEmbeddingService.deleteEmbedding(post);
+        commentRepository.deleteAllByPostIdAndParentIsNotNull(postId);
+        commentRepository.deleteAllByPostIdAndParentIsNull(postId);
+        postLikeRepository.deleteAllByPostId(postId);
+        chatRoomRepository.deleteByPostId(postId);
 
         postRepository.delete(post);
     }
