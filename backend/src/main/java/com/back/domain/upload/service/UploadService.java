@@ -19,7 +19,9 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -134,6 +136,29 @@ public class UploadService {
 
         List<UploadedImage> images = uploadedImageRepository.findAllByKeyIn(keys);
         images.forEach(UploadedImage::uncommit);
+    }
+
+    /**
+     * 게시글 수정 시, 수정 전/후 본문을 비교해서 이미지 상태를 동기화
+     * - 새 본문에 남아있거나 새로 추가된 이미지 → COMMITTED
+     * - 새 본문에서 빠진(더는 안 쓰이는) 이미지 → PENDING으로 되돌림 (스케줄러가 나중에 정리)
+     */
+    @Transactional
+    public void syncImages(String oldContent, String newContent) {
+        Set<String> oldKeys = new HashSet<>(extractKeys(oldContent));
+        Set<String> newKeys = new HashSet<>(extractKeys(newContent));
+
+        Set<String> removedKeys = new HashSet<>(oldKeys);
+        removedKeys.removeAll(newKeys);
+
+        if (!removedKeys.isEmpty()) {
+            uploadedImageRepository.findAllByKeyIn(new ArrayList<>(removedKeys))
+                    .forEach(UploadedImage::uncommit);
+        }
+        if (!newKeys.isEmpty()) {
+            uploadedImageRepository.findAllByKeyIn(new ArrayList<>(newKeys))
+                    .forEach(UploadedImage::commit);
+        }
     }
 
     private String generateKey(Long userId, String filename) {

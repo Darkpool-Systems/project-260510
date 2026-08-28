@@ -110,9 +110,10 @@ public class PostService {
             throw new CustomException(ErrorCode.POST_FORBIDDEN);
         }
 
+        String oldContent = post.getContent();
         post.update(request.getTitle(), request.getContent());
 
-        uploadService.commitImages(post.getContent());
+        uploadService.syncImages(oldContent, post.getContent());
 
         postEmbeddingService.saveOrUpdateEmbedding(post);
     }
