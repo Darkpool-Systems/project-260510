@@ -41,6 +41,11 @@ r2:
   bucket: test-bucket
   public-base-url: https://test.r2.dev
 
+livekit:
+  url: wss://test.livekit.cloud
+  api-key: test-api-key
+  api-secret: test-api-secret
+
 app:
   frontend-url: http://localhost
   frontend-new-user-url: http://localhost/change/nickname

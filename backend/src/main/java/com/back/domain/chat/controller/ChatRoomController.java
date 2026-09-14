@@ -1,6 +1,7 @@
 package com.back.domain.chat.controller;
 
 import com.back.domain.chat.dto.ChatRoomMemberResponse;
+import com.back.domain.chat.dto.LiveKitTokenResponse;
 import com.back.domain.chat.service.ChatRoomMemberService;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
@@ -74,6 +75,20 @@ public class ChatRoomController {
         Long userId = getUserId(authentication);
         chatRoomMemberService.rejectRequest(userId, roomId, memberId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * POST /api/chat-rooms/{roomId}/token
+     * LiveKit 입장 토큰 발급 (방장 또는 ACCEPTED 멤버만)
+     */
+    @PostMapping("/{roomId}/token")
+    public ResponseEntity<LiveKitTokenResponse> issueToken(
+            @PathVariable Long roomId,
+            Authentication authentication
+    ) {
+        Long userId = getUserId(authentication);
+        LiveKitTokenResponse response = chatRoomMemberService.issueToken(userId, roomId);
+        return ResponseEntity.ok(response);
     }
 
     private Long getUserId(Authentication authentication) {

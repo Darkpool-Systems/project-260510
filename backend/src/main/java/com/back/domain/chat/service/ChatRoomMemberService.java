@@ -7,6 +7,7 @@ import com.back.domain.chat.domain.ChatRoomMember;
 import com.back.domain.chat.domain.ChatRoomMemberRole;
 import com.back.domain.chat.domain.ChatRoomMemberStatus;
 import com.back.domain.chat.dto.ChatRoomMemberResponse;
+import com.back.domain.chat.dto.LiveKitTokenResponse;
 import com.back.domain.chat.repository.ChatRoomMemberRepository;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.global.exception.CustomException;
@@ -24,6 +25,7 @@ public class ChatRoomMemberService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final UserRepository userRepository;
+    private final LiveKitTokenService liveKitTokenService;
 
     /**
      * 채팅방 참여 요청 - PENDING 상태로 생성
@@ -100,6 +102,44 @@ public class ChatRoomMemberService {
 
         ChatRoomMember member = getPendingMember(roomId, memberId);
         member.reject();
+    }
+
+    /**
+     * 채팅방 입장 가능 여부 - 방장이거나 ACCEPTED 상태의 멤버여야 함
+     */
+    @Transactional(readOnly = true)
+    public boolean canEnter(Long userId, Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        if (room.getOwner().getId().equals(userId)) {
+            return true;
+        }
+
+        return chatRoomMemberRepository.existsByRoomIdAndUserIdAndStatus(
+                roomId, userId, ChatRoomMemberStatus.ACCEPTED
+        );
+    }
+
+    /**
+     * LiveKit 입장 토큰 발급 - 방장이거나 ACCEPTED 상태의 멤버만 가능
+     */
+    @Transactional(readOnly = true)
+    public LiveKitTokenResponse issueToken(Long userId, Long roomId) {
+        if (!canEnter(userId, roomId)) {
+            throw new CustomException(ErrorCode.CHAT_ROOM_FORBIDDEN);
+        }
+
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return liveKitTokenService.createToken(
+                room.getLivekitRoomName(),
+                userId.toString(),
+                user.getNickname()
+        );
     }
 
     private void validateOwner(ChatRoom room, Long userId) {
