@@ -50,3 +50,9 @@ app:
   frontend-url: http://localhost
   frontend-new-user-url: http://localhost/change/nickname
   frontend-dashboard-url: http://localhost/dashboard
+
+# 테스트 전용 VAPID 키 (프로덕션과 무관, 실제 구독자 없음)
+vapid:
+  public-key: BKppLNwlz9dvPTc7UQtSW57mgO-ZN8LJhXZsvBMLdfW3e-vFH3Wx5SsLjvPwhSdNGZEXwoWYguIdxNqbktto2zU
+  private-key: 2BYfPtkRl-EJ6ph4HOvS5ogzkhCTDMZov25hnft1PgI
+  subject: mailto:test@test.com

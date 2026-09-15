@@ -105,6 +105,29 @@ DELETE /api/notifications/subscribe?endpoint={endpoint}
 
 알림 끄기 버튼을 누르거나 로그아웃할 때 호출하면 된다. 없는 endpoint를 보내도 에러 없이 무시된다.
 
+### 2.3.1 API 호출 시점 (정확히 언제 호출해야 하는가)
+
+**절대 하면 안 되는 것**: 페이지 로드 직후 자동으로 `Notification.requestPermission()`을 호출하는 것. 유저 제스처(클릭) 없이 권한을 요청하면 브라우저가 자동으로 막거나 거부율이 매우 높아지고, 한번 "차단"으로 거부되면 유저가 브라우저 설정에 직접 들어가서 풀기 전까진 다시 요청 자체가 불가능해진다. 반드시 버튼 클릭 같은 유저 액션 안에서만 요청한다.
+
+**구독 등록 (`POST /api/notifications/subscribe`) 호출 시점**
+
+| 시점 | 호출 여부 | 설명 |
+|------|-----------|------|
+| 유저가 "알림 켜기" 버튼을 직접 클릭했을 때 | ✅ 호출 | 유일한 기본 트리거. `requestPermission()` → 허용 시 `subscribe()` → 서버 전송까지 이 클릭 핸들러 안에서 한 번에 처리 |
+| 로그인 직후, `Notification.permission === 'granted'`이면서 `registration.pushManager.getSubscription()`이 `null`일 때 | ✅ 호출 | 이전에 이미 권한을 허용했었는데(다른 세션에서 켰거나) 이 브라우저엔 아직 구독이 없는 경우. `requestPermission()`은 다시 호출하지 않고(이미 granted 상태라 즉시 반환됨) `subscribe()`만 조용히 실행 |
+| 로그인 직후, `Notification.permission`이 `'default'`(한 번도 물어본 적 없음)이거나 `'denied'`일 때 | ❌ 호출 안 함 | 자동으로 권한을 요청하지 않는다. 유저가 버튼을 누를 때까지 대기 |
+| `pushsubscriptionchange` 이벤트 발생 시 (Service Worker 내부) | ✅ 호출 | 브라우저가 자체적으로 구독을 만료/교체했을 때 발생. 새 구독을 받아 즉시 서버에 재등록해야 알림이 안 끊긴다 |
+| 페이지 진입/새로고침마다 | ❌ 호출 안 함 | 매번 부를 필요 없음. 위 "로그인 직후" 체크 한 번이면 충분 (같은 endpoint로 재등록해도 서버가 덮어쓰기 처리하긴 하지만, 불필요한 요청이므로 지양) |
+
+**구독 해제 (`DELETE /api/notifications/subscribe`) 호출 시점**
+
+| 시점 | 호출 여부 | 설명 |
+|------|-----------|------|
+| 유저가 "알림 끄기" 버튼/토글을 클릭했을 때 | ✅ 호출 | `pushManager`의 구독도 `subscription.unsubscribe()`로 같이 해제해서 브라우저 쪽 상태와 서버 쪽 상태를 맞춘다 |
+| 로그아웃 버튼 클릭 시 | ✅ 호출 | **로그아웃 API를 부르기 전에** 먼저 호출해야 한다. 이 API는 인증이 필요하므로(`인증 필요: ✅`), 쿠키/토큰을 지운 뒤에는 호출할 수 없다. 순서: 구독 해제 → 로그아웃 API |
+| 회원 탈퇴 시 | ✅ 호출 | 마찬가지로 탈퇴 API 호출 전에 먼저 해제. (탈퇴 시 유저 row가 삭제되면 FK로 구독 정보도 같이 지워지긴 하지만, 프론트에서 `pushManager.subscription.unsubscribe()`로 브라우저 쪽 구독까지 정리해줘야 브라우저에 죽은 구독이 안 남는다) |
+| `pushsubscriptionchange`로 새 구독을 받았을 때, 이전 endpoint에 대해 | ❌ 별도 호출 안 함 | 새 endpoint로 `subscribe`만 다시 호출하면 됨. 이전 endpoint는 서버가 발송 실패 시 자동으로 정리한다(무효 토큰 정리 로직) |
+
 ### 2.4 Service Worker에서 알림 받아서 표시하기
 
 `public/sw.js`
