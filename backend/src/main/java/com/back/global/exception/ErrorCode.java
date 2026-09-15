@@ -29,6 +29,11 @@ public enum ErrorCode {
     // ChatRoom
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
     CHAT_ROOM_FULL(HttpStatus.BAD_REQUEST, "채팅방 인원이 초과되었습니다."),
+    CHAT_ROOM_FORBIDDEN(HttpStatus.FORBIDDEN, "채팅방에 대한 권한이 없습니다."),
+    CHAT_ROOM_ALREADY_REQUESTED(HttpStatus.CONFLICT, "이미 참여를 요청했거나 가입된 채팅방입니다."),
+    CHAT_ROOM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "참여 요청을 찾을 수 없습니다."),
+    CHAT_ROOM_OWNER_CANNOT_JOIN(HttpStatus.BAD_REQUEST, "본인 채팅방에는 참여 요청을 할 수 없습니다."),
+    CHAT_ROOM_MEMBER_NOT_PENDING(HttpStatus.BAD_REQUEST, "이미 처리된 참여 요청입니다."),
 
     // Post Embedding
     EMBEDDING_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "게시글 임베딩 생성에 실패했습니다."),
