@@ -40,6 +40,11 @@ jwt:
   access-token-expiry: 3600000
   refresh-token-expiry: 604800000
 
+vapid:
+  public-key: ${VAPID_PUBLIC_KEY}
+  private-key: ${VAPID_PRIVATE_KEY}
+  subject: ${VAPID_SUBJECT}
+
 r2:
   account-id: ${R2_ACCOUNT_ID}
   access-key: ${R2_ACCESS_KEY}

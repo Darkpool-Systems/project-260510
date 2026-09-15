@@ -7,12 +7,14 @@ import com.back.domain.comment.dto.CommentCreateRequest;
 import com.back.domain.comment.dto.CommentCreateResponse;
 import com.back.domain.comment.dto.CommentResponse;
 import com.back.domain.comment.dto.CommentUpdateRequest;
+import com.back.domain.comment.event.CommentCreatedEvent;
 import com.back.domain.comment.repository.CommentRepository;
 import com.back.domain.post.domain.Post;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.exception.CustomException;
 import com.back.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 댓글/대댓글 작성
@@ -65,6 +68,9 @@ public class CommentService {
 
         commentRepository.save(comment);
         post.increaseCommentCount();
+
+        // 알림 발송은 댓글 저장 트랜잭션 커밋 이후 비동기로 처리 (CommentNotificationListener)
+        eventPublisher.publishEvent(new CommentCreatedEvent(comment.getId()));
 
         return CommentCreateResponse.builder()
                 .commentId(comment.getId())

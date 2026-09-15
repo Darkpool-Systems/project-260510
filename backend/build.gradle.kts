@@ -30,6 +30,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("io.livekit:livekit-server:0.13.0") // 채팅방 입장 토큰 발급, 방 제어
+    implementation("nl.martijndwars:web-push:5.1.1") // Web Push(VAPID) 발송
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1") // web-push가 요구하는 ECDH 암호화 Provider
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
