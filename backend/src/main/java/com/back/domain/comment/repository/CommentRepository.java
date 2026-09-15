@@ -24,6 +24,20 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Optional<Comment> findByIdWithAuthor(@Param("id") Long id);
 
     /**
+     * 댓글 생성 알림 발송용 단건 조회
+     * author(댓글 작성자), post + post.author(게시글 작성자),
+     * parent + parent.author(대댓글이면 원 댓글 작성자)까지 한 번에 fetch
+     */
+    @Query("SELECT c FROM Comment c " +
+            "JOIN FETCH c.author " +
+            "JOIN FETCH c.post p " +
+            "JOIN FETCH p.author " +
+            "LEFT JOIN FETCH c.parent parent " +
+            "LEFT JOIN FETCH parent.author " +
+            "WHERE c.id = :id")
+    Optional<Comment> findByIdWithNotificationTargets(@Param("id") Long id);
+
+    /**
      * 게시글 삭제 시 자식(대댓글)을 먼저 지우기 위한 조건부 삭제
      */
     void deleteAllByPostIdAndParentIsNotNull(Long postId);
