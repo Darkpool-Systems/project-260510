@@ -93,9 +93,11 @@ public class PostService {
         Post post = postRepository.findByIdWithAuthor(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        boolean chatRoomExists = chatRoomRepository.existsByPostId(postId);
+        Long chatRoomId = chatRoomRepository.findByPostId(postId)
+                .map(ChatRoom::getId)
+                .orElse(null);
 
-        return PostDetailResponse.of(post, chatRoomExists);
+        return PostDetailResponse.of(post, chatRoomId);
     }
 
     /**
@@ -117,8 +119,10 @@ public class PostService {
 
         postEmbeddingService.saveOrUpdateEmbedding(post);
 
-        boolean chatRoomExists = chatRoomRepository.existsByPostId(postId);
-        return PostDetailResponse.of(post, chatRoomExists);
+        Long chatRoomId = chatRoomRepository.findByPostId(postId)
+                .map(ChatRoom::getId)
+                .orElse(null);
+        return PostDetailResponse.of(post, chatRoomId);
     }
 
     /**
