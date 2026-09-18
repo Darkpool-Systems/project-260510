@@ -137,7 +137,7 @@ public class ChatRoomMemberService {
 
         return liveKitTokenService.createToken(
                 room.getLivekitRoomName(),
-                userId.toString(),
+                "user-" + userId,
                 user.getNickname()
         );
     }
