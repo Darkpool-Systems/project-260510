@@ -3,6 +3,7 @@ package com.back.domain.post.service;
 import com.back.domain.auth.domain.User;
 import com.back.domain.auth.repository.UserRepository;
 import com.back.domain.chat.domain.ChatRoom;
+import com.back.domain.chat.repository.ChatRoomMemberRepository;
 import com.back.domain.chat.repository.ChatRoomRepository;
 import com.back.domain.chat.service.ChatRoomService;
 import com.back.domain.comment.repository.CommentRepository;
@@ -30,6 +31,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final ChatRoomService chatRoomService;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
@@ -143,7 +145,11 @@ public class PostService {
         commentRepository.deleteAllByPostIdAndParentIsNotNull(postId);
         commentRepository.deleteAllByPostIdAndParentIsNull(postId);
         postLikeRepository.deleteAllByPostId(postId);
-        chatRoomRepository.deleteByPostId(postId);
+
+        chatRoomRepository.findByPostId(postId).ifPresent(chatRoom -> {
+            chatRoomMemberRepository.deleteAllByRoomId(chatRoom.getId());
+            chatRoomRepository.delete(chatRoom);
+        });
 
         postRepository.delete(post);
     }
