@@ -21,10 +21,11 @@ public class PostDetailResponse {
     private final int likeCount;
     private final int commentCount;
     private final boolean chatRoomExists;
+    private final Long chatRoomId;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    public static PostDetailResponse of(Post post, boolean chatRoomExists) {
+    public static PostDetailResponse of(Post post, Long chatRoomId) {
         return PostDetailResponse.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -32,7 +33,8 @@ public class PostDetailResponse {
                 .writer(Writer.from(post.getAuthor()))
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())
-                .chatRoomExists(chatRoomExists)
+                .chatRoomExists(chatRoomId != null)
+                .chatRoomId(chatRoomId)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();

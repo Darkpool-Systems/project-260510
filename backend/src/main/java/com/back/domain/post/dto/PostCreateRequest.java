@@ -1,5 +1,6 @@
 package com.back.domain.post.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -24,4 +25,17 @@ public class PostCreateRequest {
     private String chatRoomTitle;
 
     private Integer maxUsers;
+
+    /**
+     * createChatRoom이 true일 때만 chatRoomTitle/maxUsers를 검증
+     * maxUsers는 방장을 포함한 총 인원 기준, 최소 2명
+     */
+    @AssertTrue(message = "채팅방 생성 시 제목은 필수이고, 최대 인원(방장 포함)은 2명 이상이어야 합니다.")
+    private boolean isChatRoomInputValid() {
+        if (!createChatRoom) {
+            return true;
+        }
+        return chatRoomTitle != null && !chatRoomTitle.isBlank()
+                && maxUsers != null && maxUsers >= 2;
+    }
 }

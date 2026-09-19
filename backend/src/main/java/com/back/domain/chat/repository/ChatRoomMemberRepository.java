@@ -18,4 +18,6 @@ public interface ChatRoomMemberRepository extends JpaRepository<ChatRoomMember, 
     List<ChatRoomMember> findAllByRoomIdAndStatus(Long roomId, ChatRoomMemberStatus status);
 
     long countByRoomIdAndStatus(Long roomId, ChatRoomMemberStatus status);
+
+    void deleteAllByRoomId(Long roomId);
 }

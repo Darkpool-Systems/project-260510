@@ -83,7 +83,7 @@ public class ChatRoomMemberService {
         ChatRoomMember member = getPendingMember(roomId, memberId);
 
         long acceptedCount = chatRoomMemberRepository.countByRoomIdAndStatus(roomId, ChatRoomMemberStatus.ACCEPTED);
-        if (acceptedCount >= room.getMaxUsers()) {
+        if (acceptedCount >= room.getMaxUsers() - 1) {  // maxUsers는 방장 포함 총원이라 방장 1자리를 미리 뺌
             throw new CustomException(ErrorCode.CHAT_ROOM_FULL);
         }
 
@@ -137,7 +137,7 @@ public class ChatRoomMemberService {
 
         return liveKitTokenService.createToken(
                 room.getLivekitRoomName(),
-                userId.toString(),
+                "user-" + userId,
                 user.getNickname()
         );
     }
